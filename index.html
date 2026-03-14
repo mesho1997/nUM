@@ -82,7 +82,8 @@
             padding: 20px;
             border: 1px solid #888;
             border-radius: 10px;
-            width: 350px;
+            width: 400px;
+            max-width: 90%;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
             text-align: center;
         }
@@ -95,21 +96,27 @@
             padding: 10px;
             background-color: #f0f0f0;
             border-radius: 5px;
+            min-height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .captcha-image img {
             max-width: 100%;
             height: auto;
             border: 1px solid #ddd;
+            border-radius: 3px;
         }
         .captcha-input {
-            width: 100px;
-            padding: 10px;
-            font-size: 18px;
+            width: 120px;
+            padding: 12px;
+            font-size: 20px;
             text-align: center;
             margin: 10px auto;
             display: block;
             border: 2px solid #007bff;
             border-radius: 5px;
+            font-weight: bold;
         }
         .captcha-buttons {
             display: flex;
@@ -118,7 +125,7 @@
             margin-top: 15px;
         }
         .captcha-buttons button {
-            padding: 8px 20px;
+            padding: 8px 25px;
             font-size: 14px;
         }
         #confirmCaptcha {
@@ -149,6 +156,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 14px;
         }
         th, td {
             padding: 10px;
@@ -158,6 +166,8 @@
         th {
             background-color: #007bff;
             color: white;
+            position: sticky;
+            top: 0;
         }
         tr:hover {
             background-color: #f1f1f1;
@@ -172,11 +182,30 @@
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
         .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 10px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .captcha-note {
+            font-size: 12px;
+            color: #666;
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>نظام إدارة SMS - نسخة متطورة</h1>
+        <h1>📱 نظام إدارة SMS - نسخة متطورة</h1>
 
         <!-- رسائل الحالة -->
         <div id="statusMessage" class="status-message" style="display: none;"></div>
@@ -193,20 +222,22 @@
             <div class="captcha-content">
                 <h3>🔐 أدخل رمز الكابتشا</h3>
                 <p>قم بإدخال ناتج جمع الرقمين الظاهرين في الصورة</p>
-                <div class="captcha-image">
-                    <img id="captchaImage" src="" alt="صورة الكابتشا">
+                <div class="captcha-image" id="captchaImageContainer">
+                    <div class="loading-spinner"></div>
                 </div>
-                <input type="text" id="captchaInput" class="captcha-input" placeholder="النتيجة" maxlength="2">
+                <div class="captcha-note" id="captchaNote">جاري تحميل صورة الكابتشا...</div>
+                <input type="text" id="captchaInput" class="captcha-input" placeholder="النتيجة" maxlength="2" disabled>
                 <div class="captcha-buttons">
-                    <button id="confirmCaptcha">تأكيد</button>
+                    <button id="confirmCaptcha" disabled>تأكيد</button>
                     <button id="cancelCaptcha">إلغاء</button>
+                    <button id="refreshCaptcha" style="background-color: #ffc107;">🔄 تحديث</button>
                 </div>
             </div>
         </div>
 
         <!-- إطار لعرض الصفحات -->
         <h2>المحتوى المستعرض:</h2>
-        <iframe id="contentFrame" src="about:blank" title="عرض المحتوى عن بعد"></iframe>
+        <iframe id="contentFrame" src="about:blank" title="عرض المحتوى عن بعد" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation"></iframe>
 
         <!-- مكان لعرض الأرقام -->
         <div id="numbersDisplay" style="display: none;">
@@ -220,6 +251,7 @@
         // الإعدادات الأساسية
         // =============================================
         const BASE_URL = 'http://54.39.104.241/ints';
+        // PHPSESSID من طلبات الـ curl - قد تحتاج لتحديثه
         const PHPSESSID = '6600b87d11351991b8b754ae9dfd0a70';
         
         // بيانات تسجيل الدخول الأساسية (بدون الكابتشا)
@@ -227,6 +259,14 @@
             username: '1Lmohamedabed',
             password: '1Lmohamedabed'
         };
+
+        // CORS Proxies للتغلب على مشكلة HTTPS/HTTP
+        const CORS_PROXIES = [
+            'https://api.allorigins.win/raw?url=',
+            'https://cors-anywhere.herokuapp.com/',
+            'https://crossorigin.me/',
+            '' // المحاولة المباشرة كخيار أخير
+        ];
 
         console.log('🚀 تم تحميل الصفحة. الإعدادات:', { BASE_URL, PHPSESSID, username: loginData.username });
 
@@ -253,50 +293,76 @@
         }
 
         // =============================================
-        // دوال الكابتشا
+        // دوال الكابتشا المتقدمة
         // =============================================
-        async function fetchCaptchaImage() {
-            console.log('📸 محاولة جلب صورة الكابتشا...');
-            
-            // محاولة جلب الصورة من مسارين محتملين
+        async function fetchCaptchaWithProxy(proxyIndex = 0) {
+            const timestamp = new Date().getTime();
             const captchaPaths = [
                 '/captcha.php',
                 '/captcha',
                 '/securimage/securimage_show.php',
-                '/captcha/image'
+                '/captcha/image',
+                '/simple-php-captcha.php',
+                '/captcha/generate'
             ];
             
-            // سنحاول المسار الأول فقط لأنه الأكثر شيوعاً
-            // إذا فشل، يمكننا تجربة المسارات الأخرى
-            const captchaUrl = `${BASE_URL}/captcha.php?t=${new Date().getTime()}`;
-            console.log('🔗 رابط الكابتشا:', captchaUrl);
-            
-            try {
-                // نحاول تحميل الصورة
-                const response = await fetch(captchaUrl, {
-                    headers: {
-                        'Cookie': `PHPSESSID=${PHPSESSID}`,
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                    }
-                });
+            // تجربة كل مسار مع كل بروكسي
+            for (const path of captchaPaths) {
+                const directUrl = `${BASE_URL}${path}?t=${timestamp}`;
                 
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const imageUrl = URL.createObjectURL(blob);
-                    console.log('✅ تم تحميل صورة الكابتشا بنجاح');
-                    return imageUrl;
-                } else {
-                    console.error('❌ فشل تحميل الكابتشا:', response.status, response.statusText);
+                for (let i = proxyIndex; i < CORS_PROXIES.length; i++) {
+                    const proxy = CORS_PROXIES[i];
+                    let urlToFetch = directUrl;
                     
-                    // إذا فشل الطلب، نستخدم صورة بديلة من الرابط الأصلي
-                    console.log('⚠️ استخدام رابط الكابتشا الأصلي مباشرة');
-                    return captchaUrl; // نعيد الرابط مباشرة لنضعه في src
+                    if (proxy) {
+                        urlToFetch = proxy + encodeURIComponent(directUrl);
+                    }
+                    
+                    console.log(`🔍 محاولة: Proxy=${proxy || 'مباشر'}, Path=${path}`);
+                    
+                    try {
+                        // إذا كنا نستخدم بروكسي، نتوقع نص وليس صورة
+                        if (proxy) {
+                            const response = await fetch(urlToFetch, {
+                                headers: {
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                                }
+                            });
+                            
+                            if (response.ok) {
+                                // البروكسي يعيد محتوى الصفحة كنص
+                                const text = await response.text();
+                                
+                                // تحويل النص إلى blob
+                                const blob = new Blob([text], { type: 'image/jpeg' });
+                                const imageUrl = URL.createObjectURL(blob);
+                                console.log(`✅ نجح مع Proxy: ${proxy}, Path: ${path}`);
+                                return { success: true, url: imageUrl, proxyUsed: proxy, pathUsed: path };
+                            }
+                        } else {
+                            // محاولة مباشرة (قد تنجح مع بعض الصور رغم تحذير Mixed Content)
+                            const img = new Image();
+                            await new Promise((resolve, reject) => {
+                                img.onload = () => {
+                                    console.log(`✅ نجح التحميل المباشر للصورة: ${path}`);
+                                    resolve();
+                                };
+                                img.onerror = () => {
+                                    reject(new Error('فشل تحميل الصورة مباشرة'));
+                                };
+                                img.src = directUrl;
+                            });
+                            
+                            return { success: true, url: directUrl, proxyUsed: 'direct', pathUsed: path };
+                        }
+                    } catch (error) {
+                        console.log(`❌ فشل مع Proxy ${proxy}, Path ${path}:`, error.message);
+                        // استمر في المحاولة
+                    }
                 }
-            } catch (error) {
-                console.error('❌ خطأ في تحميل الكابتشا:', error);
-                // في حالة الخطأ، نعيد رابط الصورة الأصلي
-                return captchaUrl;
             }
+            
+            throw new Error('فشلت جميع محاولات تحميل الكابتشا');
         }
 
         // عرض نافذة الكابتشا
@@ -304,15 +370,43 @@
             console.log('🪟 فتح نافذة الكابتشا');
             return new Promise(async (resolve, reject) => {
                 const modal = document.getElementById('captchaModal');
-                const captchaImg = document.getElementById('captchaImage');
+                const imageContainer = document.getElementById('captchaImageContainer');
                 const captchaInput = document.getElementById('captchaInput');
                 const confirmBtn = document.getElementById('confirmCaptcha');
                 const cancelBtn = document.getElementById('cancelCaptcha');
+                const refreshBtn = document.getElementById('refreshCaptcha');
+                const captchaNote = document.getElementById('captchaNote');
                 
-                // جلب صورة الكابتشا
-                const imgSrc = await fetchCaptchaImage();
-                captchaImg.src = imgSrc;
-                captchaInput.value = '';
+                // دالة تحميل الكابتشا
+                async function loadCaptcha() {
+                    // إظهار مؤشر التحميل
+                    imageContainer.innerHTML = '<div class="loading-spinner"></div>';
+                    captchaInput.disabled = true;
+                    confirmBtn.disabled = true;
+                    captchaNote.textContent = 'جاري تحميل صورة الكابتشا...';
+                    
+                    try {
+                        // محاولة تحميل الكابتشا
+                        const result = await fetchCaptchaWithProxy();
+                        
+                        // عرض الصورة
+                        imageContainer.innerHTML = `<img src="${result.url}" alt="صورة الكابتشا" style="max-width: 100%;">`;
+                        captchaInput.disabled = false;
+                        confirmBtn.disabled = false;
+                        captchaNote.textContent = `✅ تم التحميل عبر: ${result.proxyUsed}`;
+                        captchaInput.value = '';
+                        captchaInput.focus();
+                        
+                        console.log('✅ تم تحميل الكابتشا:', result);
+                    } catch (error) {
+                        console.error('❌ فشل تحميل الكابتشا:', error);
+                        imageContainer.innerHTML = '<div style="color: red; padding: 20px;">❌ فشل تحميل الكابتشا<br>انقر على "تحديث" للمحاولة مرة أخرى</div>';
+                        captchaNote.textContent = 'فشل التحميل. حاول مرة أخرى.';
+                    }
+                }
+                
+                // تحميل الكابتشا لأول مرة
+                await loadCaptcha();
                 
                 // عرض النافذة
                 modal.style.display = 'block';
@@ -342,14 +436,22 @@
                     reject(new Error('تم إلغاء عملية الكابتشا من قبل المستخدم'));
                 };
                 
+                // معالج التحديث
+                const onRefresh = async () => {
+                    console.log('🔄 المستخدم يطلب تحديث الكابتشا');
+                    await loadCaptcha();
+                };
+                
                 // تنظيف المستمعين
                 const cleanup = () => {
                     confirmBtn.removeEventListener('click', onConfirm);
                     cancelBtn.removeEventListener('click', onCancel);
+                    refreshBtn.removeEventListener('click', onRefresh);
                 };
                 
                 confirmBtn.addEventListener('click', onConfirm);
                 cancelBtn.addEventListener('click', onCancel);
+                refreshBtn.addEventListener('click', onRefresh);
             });
         }
 
@@ -375,46 +477,38 @@
             try {
                 console.log('📤 إرسال طلب تسجيل الدخول إلى:', `${BASE_URL}/signin`);
                 
-                const response = await fetch(`${BASE_URL}/signin`, {
+                // استخدام بروكسي لتجنب CORS
+                const proxyUrl = CORS_PROXIES[1] + encodeURIComponent(`${BASE_URL}/signin`); // استخدام cors-anywhere
+                
+                const response = await fetch(proxyUrl, {
                     method: 'POST',
                     headers: {
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-                        'Accept-Language': 'en,ar;q=0.9,en-US;q=0.8',
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
                         'Content-Type': 'application/x-www-form-urlencoded',
                         'Cookie': `PHPSESSID=${PHPSESSID}`,
                         'Origin': BASE_URL,
-                        'Referer': `${BASE_URL}/login`,
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                     },
-                    body: formBody,
-                    credentials: 'include'
+                    body: formBody
                 });
 
                 console.log('📥 استلام رد من السيرفر:', {
                     status: response.status,
-                    statusText: response.statusText,
-                    headers: Object.fromEntries(response.headers.entries())
+                    statusText: response.statusText
                 });
 
                 if (response.ok) {
                     console.log('✅ تسجيل الدخول ناجح!');
                     showMessage('✅ تم تسجيل الدخول بنجاح!', 'success');
                     
-                    // قراءة محتوى الرد (قد يكون HTML)
                     const responseText = await response.text();
                     console.log('📄 محتوى الرد (أول 200 حرف):', responseText.substring(0, 200) + '...');
-                    
-                    // التحقق من وجود أخطاء في الرد
-                    if (responseText.includes('خطأ') || responseText.includes('فشل')) {
-                        console.warn('⚠️可能存在 خطأ في تسجيل الدخول:', responseText.substring(0, 500));
-                    }
                     
                     updateIframe(`${BASE_URL}/client/`);
                 } else {
                     console.error('❌ فشل تسجيل الدخول:', response.status, response.statusText);
                     showMessage(`❌ فشل تسجيل الدخول. الحالة: ${response.status}`, 'error');
                     
-                    // قراءة محتوى الخطأ
                     const errorText = await response.text();
                     console.error('📄 محتوى الخطأ:', errorText);
                 }
@@ -429,20 +523,16 @@
             }
         }
 
-        // دالة تسجيل الدخول الرئيسية (التي تبدأ بعرض الكابتشا)
+        // دالة تسجيل الدخول الرئيسية
         async function loginWithCaptcha() {
             console.log('🔄 بدء عملية تسجيل الدخول مع الكابتشا');
             
             try {
-                // عرض نافذة الكابتشا وانتظار إدخال المستخدم
                 const captchaValue = await showCaptchaModal();
                 console.log('✅ تم الحصول على قيمة الكابتشا:', captchaValue);
-                
-                // تنفيذ تسجيل الدخول
                 await performLogin(captchaValue);
-                
             } catch (error) {
-                console.error('❌ فشلت عملية تسجيل الدخول مع الكابتشا:', error.message);
+                console.error('❌ فشلت عملية تسجيل الدخول:', error.message);
                 showMessage(error.message, 'error');
             }
         }
@@ -472,10 +562,6 @@
                 `&callback=parseSMSNumbers`;
 
             console.log('🔗 رابط جلب الأرقام (JSONP):', dataUrl);
-            console.log('📦 معاملات الطلب:', {
-                timestamp,
-                callback: 'parseSMSNumbers'
-            });
 
             const script = document.createElement('script');
             script.src = dataUrl;
@@ -485,38 +571,33 @@
                 
                 if (data && data.aaData && Array.isArray(data.aaData)) {
                     console.log(`✅ تم استلام ${data.aaData.length} سجل من الأرقام`);
-                    console.log('📊 أول سجل:', data.aaData[0]);
                     displayNumbersTable(data.aaData);
                     showMessage(`✅ تم تحميل ${data.aaData.length} رقم بنجاح.`, 'success');
                 } else {
                     console.warn('⚠️ البيانات المستلمة لا تحتوي على aaData:', data);
-                    tableContainer.innerHTML = 'لم يتم العثور على أرقام أو البيانات غير متوقعة.';
+                    tableContainer.innerHTML = 'لم يتم العثور على أرقام.';
                     showMessage('✅ تم التحميل ولكن لا توجد أرقام.', 'info');
                 }
                 
                 document.body.removeChild(script);
                 delete window.parseSMSNumbers;
-                console.log('🧹 تنظيف: تم إزالة سكريبت JSONP');
             };
 
             script.onerror = function(error) {
                 console.error('💥 فشل تحميل سكريبت JSONP:', error);
-                tableContainer.innerHTML = 'حدث خطأ أثناء تحميل الأرقام. تحقق من وحدة التحكم (F12) لمزيد من التفاصيل.';
-                showMessage('❌ فشل تحميل الأرقام. تحقق من اتصالك بالسيرفر.', 'error');
+                tableContainer.innerHTML = 'حدث خطأ أثناء تحميل الأرقام.';
+                showMessage('❌ فشل تحميل الأرقام.', 'error');
                 document.body.removeChild(script);
                 delete window.parseSMSNumbers;
             };
 
-            console.log('📤 إرسال طلب JSONP...');
             document.body.appendChild(script);
         }
 
         function displayNumbersTable(data) {
-            console.log('📊 عرض الأرقام في جدول...');
             const tableContainer = document.getElementById('numbersTableContainer');
             
             if (!data || data.length === 0) {
-                console.log('📭 لا توجد بيانات لعرضها');
                 tableContainer.innerHTML = '<p>لا توجد أرقام لعرضها.</p>';
                 return;
             }
@@ -525,16 +606,12 @@
             html += '<th>المعرف</th><th>الرقم</th><th>الحالة</th><th>نوع الخدمة</th><th>تاريخ الإنشاء</th><th>ملاحظات</th>';
             html += '</tr></thead><tbody>';
 
-            data.forEach((row, index) => {
+            data.forEach(row => {
                 html += '<tr>';
-                row.forEach((cell, cellIndex) => {
+                row.forEach(cell => {
                     html += `<td>${cell || ''}</td>`;
                 });
                 html += '</tr>';
-                
-                if (index === 0) {
-                    console.log('🔍 نموذج صف:', row);
-                }
             });
 
             html += '</tbody></table>';
@@ -564,7 +641,7 @@
             });
 
             console.log('🎉 تم تحميل الصفحة بنجاح');
-            showMessage('مرحباً! استخدم الأزرار أعلاه للتحكم. افتح وحدة التحكم (F12) لمشاهدة التفاصيل.', 'info');
+            showMessage('مرحباً! افتح وحدة التحكم (F12) لمشاهدة التفاصيل.', 'info');
         });
 
         // إغلاق النافذة إذا ضغط المستخدم خارجها

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة SMS - مع CORS Proxy</title>
+    <title>نظام إدارة SMS - جلب الأرقام بعد تسجيل الدخول</title>
     <style>
         * {
             margin: 0;
@@ -19,7 +19,7 @@
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 20px auto;
             background: white;
             border-radius: 20px;
@@ -32,6 +32,8 @@
             margin-bottom: 20px;
             text-align: center;
             font-size: 28px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
         }
 
         .warning-box {
@@ -47,10 +49,6 @@
             color: #0056b3;
             font-weight: bold;
             text-decoration: none;
-        }
-
-        .warning-box a:hover {
-            text-decoration: underline;
         }
 
         .actions {
@@ -70,8 +68,6 @@
             cursor: pointer;
             transition: all 0.3s;
             font-size: 16px;
-            background: #007bff;
-            color: white;
         }
 
         .action-btn:hover {
@@ -79,10 +75,10 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
-        #loginBtn { background: #28a745; }
-        #dashboardBtn { background: #007bff; }
-        #numbersBtn { background: #17a2b8; }
-        #clearBtn { background: #dc3545; }
+        #loginBtn { background: #28a745; color: white; }
+        #dashboardBtn { background: #007bff; color: white; }
+        #numbersBtn { background: #17a2b8; color: white; }
+        #clearBtn { background: #dc3545; color: white; }
 
         .status {
             padding: 15px;
@@ -97,24 +93,25 @@
         .status.info { background: #d1ecf1; color: #0c5460; }
         .status.warning { background: #fff3cd; color: #856404; }
 
+        .session-info {
+            background: #e7f3ff;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 16px;
+        }
+
         .captcha-info {
             background: #f8f9fa;
             border-radius: 10px;
             padding: 15px;
             margin: 15px 0;
             font-family: monospace;
-            direction: ltr;
             text-align: center;
             font-size: 18px;
-        }
-
-        iframe {
-            width: 100%;
-            height: 500px;
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
-            margin-top: 20px;
-            background: white;
+            border: 2px dashed #28a745;
         }
 
         .numbers-table {
@@ -124,21 +121,48 @@
             background: white;
             border-radius: 10px;
             overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
         .numbers-table th {
             background: #007bff;
             color: white;
-            padding: 12px;
+            padding: 15px;
+            font-weight: bold;
         }
 
         .numbers-table td {
-            padding: 10px;
+            padding: 12px;
             border-bottom: 1px solid #dee2e6;
         }
 
         .numbers-table tr:hover {
             background: #f8f9fa;
+        }
+
+        .numbers-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
         }
 
         .console-log {
@@ -175,52 +199,73 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        iframe {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            margin-top: 20px;
+            background: white;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🔧 نظام إدارة SMS - مع CORS Proxy</h1>
+        <h1>📱 نظام إدارة SMS - جلب الأرقام بعد تسجيل الدخول</h1>
 
-        <!-- تحذير مهم -->
+        <!-- تحذير CORS -->
         <div class="warning-box">
-            <strong>⚠️ تنبيه مهم:</strong> أنت تتصفح من HTTPS (GitHub Pages) والسيرفر يعمل على HTTP.<br>
-            <strong>الحل:</strong> انقر على الرابط التالي لتفعيل CORS Proxy مؤقتاً:
+            <strong>⚠️ تنبيه مهم:</strong> 
             <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">
-                https://cors-anywhere.herokuapp.com/corsdemo
+                اضغط هنا لتفعيل CORS Proxy (مطلوب مرة واحدة)
             </a>
-            <br>بعد فتح الرابط، اضغط على الزر الأزرق "Request temporary access to the demo server".
-        </div>
-
-        <!-- زر سريع لفتح الرابط -->
-        <div style="text-align: center; margin-bottom: 20px;">
-            <button onclick="window.open('https://cors-anywhere.herokuapp.com/corsdemo', '_blank')" 
-                    style="background: #ffc107; color: #333; padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">
-                🔓 تفعيل CORS Proxy (اضغط هنا أولاً)
-            </button>
         </div>
 
         <!-- أزرار التحكم -->
         <div class="actions">
-            <button class="action-btn" id="loginBtn">🔑 تسجيل دخول تلقائي</button>
+            <button class="action-btn" id="loginBtn">🔑 تسجيل دخول + جلب الأرقام</button>
             <button class="action-btn" id="dashboardBtn">📊 لوحة التحكم</button>
-            <button class="action-btn" id="numbersBtn">📞 عرض أرقامي</button>
+            <button class="action-btn" id="refreshNumbersBtn">🔄 تحديث الأرقام</button>
             <button class="action-btn" id="clearBtn">🧹 مسح السجل</button>
         </div>
 
-        <!-- حالة الاتصال -->
-        <div id="status" class="status info">🔄 جاري التحضير...</div>
+        <!-- حالة النظام -->
+        <div id="status" class="status info">🔄 النظام جاهز - اضغط على زر تسجيل الدخول</div>
 
-        <!-- معلومات الكابتشا المستخرجة -->
-        <div id="captchaDisplay" class="captcha-info" style="display: none;"></div>
+        <!-- معلومات الجلسة -->
+        <div class="session-info" id="sessionInfo">
+            <strong>🔐 حالة الجلسة:</strong> <span id="sessionStatus">غير مسجل</span><br>
+            <strong>🍪 PHPSESSID:</strong> <span id="sessionId">6600b87d11351991b8b754ae9dfd0a70</span><br>
+            <strong>👤 المستخدم:</strong> 1Lmohamedabed
+        </div>
 
-        <!-- إطار عرض المحتوى -->
-        <iframe id="contentFrame" src="about:blank" style="display: none;"></iframe>
+        <!-- معلومات الكابتشا -->
+        <div id="captchaInfo" class="captcha-info" style="display: none;"></div>
+
+        <!-- إحصائيات سريعة -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div>📊 حالة الدخول</div>
+                <div class="number" id="loginStatus">❌</div>
+            </div>
+            <div class="stat-card">
+                <div>📞 عدد الأرقام</div>
+                <div class="number" id="numbersCount">0</div>
+            </div>
+            <div class="stat-card">
+                <div>🕒 آخر تحديث</div>
+                <div class="number" id="lastUpdate">-</div>
+            </div>
+        </div>
 
         <!-- جدول الأرقام -->
-        <div id="numbersDisplay" style="display: none;">
+        <h2>📋 أرقام SMS الخاصة بي</h2>
+        <div style="overflow-x: auto;">
             <table class="numbers-table" id="numbersTable">
                 <thead>
                     <tr>
+                        <th>#</th>
                         <th>المعرف</th>
                         <th>الرقم</th>
                         <th>الحالة</th>
@@ -230,7 +275,11 @@
                     </tr>
                 </thead>
                 <tbody id="numbersTableBody">
-                    <tr><td colspan="6" style="text-align: center;">جاري التحميل...</td></tr>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px;">
+                            لم تقم بتسجيل الدخول بعد
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
@@ -248,26 +297,26 @@
         // =============================================
         const BASE_URL = 'http://54.39.104.241/ints';
         const PHPSESSID = '6600b87d11351991b8b754ae9dfd0a70';
-        
-        // CORS Proxy - يستخدم لتحويل HTTP إلى HTTPS
         const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
         
-        // الإعدادات
         const CONFIG = {
             username: '1Lmohamedabed',
             password: '1Lmohamedabed',
             loginUrl: `${BASE_URL}/signin`,
             dashboardUrl: `${BASE_URL}/client/SMSDashboard`,
-            numbersUrl: `${BASE_URL}/client/MySMSNumbers`,
+            numbersPageUrl: `${BASE_URL}/client/MySMSNumbers`,
             dataUrl: `${BASE_URL}/client/res/data_smsnumbers.php`
         };
+
+        // متغير لتخزين حالة تسجيل الدخول
+        let isLoggedIn = false;
 
         // =============================================
         // دوال المساعدة
         // =============================================
         function addToLog(message, type = 'info') {
             const log = document.getElementById('consoleLog');
-            const time = new Date().toLocaleTimeString();
+            const time = new Date().toLocaleTimeString('ar-EG');
             
             const colors = {
                 success: '#00ff00',
@@ -291,18 +340,25 @@
             addToLog(message, type);
         }
 
+        function updateSessionStatus(loggedIn) {
+            isLoggedIn = loggedIn;
+            document.getElementById('sessionStatus').textContent = loggedIn ? '✅ مسجل الدخول' : '❌ غير مسجل';
+            document.getElementById('loginStatus').textContent = loggedIn ? '✅' : '❌';
+            document.getElementById('sessionId').textContent = PHPSESSID;
+        }
+
         // =============================================
         // دالة جلب المحتوى عبر CORS Proxy
         // =============================================
         async function fetchWithProxy(url, options = {}) {
             const proxyUrl = CORS_PROXY + url;
-            addToLog(`🌐 استخدام CORS Proxy: ${proxyUrl}`, 'info');
+            addToLog(`🌐 استخدام Proxy: ${url}`, 'info');
             
             const defaultOptions = {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Origin': 'https://mesho1997.github.io'
+                    'Cookie': `PHPSESSID=${PHPSESSID}`
                 },
                 credentials: 'omit'
             };
@@ -311,32 +367,25 @@
             
             try {
                 const response = await fetch(proxyUrl, fetchOptions);
-                addToLog(`📥 استجابة: ${response.status} ${response.statusText}`, 'info');
+                addToLog(`📥 استجابة: ${response.status}`, 'info');
                 return response;
             } catch (error) {
-                addToLog(`❌ خطأ في الجلب: ${error.message}`, 'error');
+                addToLog(`❌ خطأ: ${error.message}`, 'error');
                 throw error;
             }
         }
 
         // =============================================
-        // دالة حل الكابتشا عبر CORS Proxy
+        // دالة حل الكابتشا
         // =============================================
         async function solveCaptcha() {
-            addToLog('🔍 بدء حل الكابتشا...', 'info');
+            addToLog('🔍 حل الكابتشا...', 'info');
             
             try {
-                // جلب صفحة تسجيل الدخول عبر الـ Proxy
                 const response = await fetchWithProxy(`${BASE_URL}/login`);
-                
-                if (!response.ok) {
-                    throw new Error(`فشل تحميل الصفحة: ${response.status}`);
-                }
-                
                 const html = await response.text();
-                addToLog('📄 تم تحميل صفحة تسجيل الدخول', 'success');
                 
-                // البحث عن نص الكابتشا
+                // البحث عن الكابتشا
                 const captchaRegex = /What is (\d+)\s*\+\s*(\d+)\s*=\s*\?/i;
                 const match = html.match(captchaRegex);
                 
@@ -346,10 +395,7 @@
                     const altMatch = html.match(altRegex);
                     
                     if (!altMatch) {
-                        // عرض جزء من HTML للتصحيح
-                        addToLog('📄 HTML المستلم:', 'warning');
-                        addToLog(html.substring(0, 500) + '...', 'warning');
-                        throw new Error('لم يتم العثور على نص الكابتشا');
+                        throw new Error('لم يتم العثور على الكابتشا');
                     }
                     
                     const num1 = parseInt(altMatch[1]);
@@ -358,10 +404,9 @@
                     
                     addToLog(`✅ الكابتشا: ${num1} + ${num2} = ${result}`, 'success');
                     
-                    // عرض في الصفحة
-                    document.getElementById('captchaDisplay').style.display = 'block';
-                    document.getElementById('captchaDisplay').innerHTML = 
-                        `🧮 الكابتشا المحلولة: <strong>${num1} + ${num2} = ${result}</strong>`;
+                    document.getElementById('captchaInfo').style.display = 'block';
+                    document.getElementById('captchaInfo').innerHTML = 
+                        `🧮 تم حل الكابتشا: <strong>${num1} + ${num2} = ${result}</strong>`;
                     
                     return result.toString();
                 }
@@ -372,14 +417,14 @@
                 
                 addToLog(`✅ الكابتشا: ${num1} + ${num2} = ${result}`, 'success');
                 
-                document.getElementById('captchaDisplay').style.display = 'block';
-                document.getElementById('captchaDisplay').innerHTML = 
-                    `🧮 الكابتشا المحلولة: <strong>${num1} + ${num2} = ${result}</strong>`;
+                document.getElementById('captchaInfo').style.display = 'block';
+                document.getElementById('captchaInfo').innerHTML = 
+                    `🧮 تم حل الكابتشا: <strong>${num1} + ${num2} = ${result}</strong>`;
                 
                 return result.toString();
                 
             } catch (error) {
-                addToLog(`❌ خطأ في حل الكابتشا: ${error.message}`, 'error');
+                addToLog(`❌ خطأ في الكابتشا: ${error.message}`, 'error');
                 throw error;
             }
         }
@@ -387,40 +432,38 @@
         // =============================================
         // دالة تسجيل الدخول
         // =============================================
-        async function autoLogin() {
-            addToLog('🚀 بدء تسجيل الدخول التلقائي...', 'info');
-            showStatus('جاري حل الكابتشا...', 'info');
+        async function login() {
+            addToLog('🚀 بدء تسجيل الدخول...', 'info');
+            showStatus('جاري تسجيل الدخول...', 'info');
             
             try {
                 // حل الكابتشا
                 const captchaResult = await solveCaptcha();
                 
-                // تحضير بيانات النموذج
+                // إرسال بيانات تسجيل الدخول
                 const formData = new URLSearchParams({
                     username: CONFIG.username,
                     password: CONFIG.password,
                     capt: captchaResult
                 });
                 
-                addToLog('📦 إرسال بيانات تسجيل الدخول', 'info');
-                
-                // إرسال طلب تسجيل الدخول عبر الـ Proxy
                 const loginResponse = await fetchWithProxy(CONFIG.loginUrl, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                        'Cookie': `PHPSESSID=${PHPSESSID}`
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     },
                     body: formData
                 });
                 
                 if (loginResponse.ok) {
-                    const responseText = await loginResponse.text();
                     addToLog('✅ تم تسجيل الدخول بنجاح!', 'success');
                     showStatus('✅ تم تسجيل الدخول بنجاح!', 'success');
+                    updateSessionStatus(true);
                     
-                    // عرض لوحة التحكم
-                    showDashboard();
+                    // بعد تسجيل الدخول مباشرة، نجلب الأرقام
+                    await fetchNumbers();
+                    
+                    return true;
                 } else {
                     throw new Error(`فشل تسجيل الدخول: ${loginResponse.status}`);
                 }
@@ -428,35 +471,41 @@
             } catch (error) {
                 addToLog(`❌ خطأ: ${error.message}`, 'error');
                 showStatus(`❌ ${error.message}`, 'error');
+                updateSessionStatus(false);
+                return false;
             }
         }
 
         // =============================================
-        // دوال أخرى
+        // دالة جلب الأرقام (المطورة)
         // =============================================
-        function showDashboard() {
-            const iframe = document.getElementById('contentFrame');
-            iframe.style.display = 'block';
-            document.getElementById('numbersDisplay').style.display = 'none';
-            
-            // استخدام iframe عادي للعرض (iframe لا يتأثر بـ CORS)
-            iframe.src = CONFIG.dashboardUrl;
-            addToLog(`🖼️ عرض لوحة التحكم`, 'info');
-        }
-
         async function fetchNumbers() {
             addToLog('📞 جلب أرقام SMS...', 'info');
             showStatus('جاري تحميل الأرقام...', 'info');
             
-            const numbersDisplay = document.getElementById('numbersDisplay');
             const tableBody = document.getElementById('numbersTableBody');
             
-            numbersDisplay.style.display = 'block';
-            document.getElementById('contentFrame').style.display = 'none';
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">جاري التحميل...</td></tr>';
+            if (!isLoggedIn) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: red;">يجب تسجيل الدخول أولاً</td></tr>';
+                return;
+            }
+            
+            tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;"><div class="loading"></div> جاري التحميل...</td></tr>';
             
             try {
-                // محاولة جلب البيانات عبر JSONP (لا يتأثر بـ CORS)
+                // نحاول الطريقة الأولى: JSONP (لا يحتاج CORS)
+                await fetchNumbersJSONP();
+            } catch (error) {
+                addToLog('⚠️ JSONP فشل، نجرب طريقة أخرى...', 'warning');
+                
+                // الطريقة الثانية: Fetch مع Proxy
+                await fetchNumbersWithProxy();
+            }
+        }
+
+        // طريقة JSONP (الأفضل)
+        function fetchNumbersJSONP() {
+            return new Promise((resolve, reject) => {
                 const callbackName = 'handleNumbers_' + Date.now();
                 const script = document.createElement('script');
                 
@@ -464,7 +513,7 @@
                     sEcho: 1,
                     iColumns: 6,
                     iDisplayStart: 0,
-                    iDisplayLength: 25,
+                    iDisplayLength: 100, // نجلب 100 رقم
                     _: Date.now(),
                     callback: callbackName
                 });
@@ -472,26 +521,17 @@
                 script.src = `${CONFIG.dataUrl}?${params.toString()}`;
                 
                 window[callbackName] = function(data) {
-                    addToLog('📥 استلام بيانات الأرقام', 'success');
+                    addToLog('📥 استلام بيانات JSONP', 'success');
                     
                     if (data && data.aaData) {
-                        let html = '';
-                        data.aaData.forEach(row => {
-                            html += '<tr>';
-                            row.forEach(cell => html += `<td>${cell || '-'}</td>`);
-                            // إكمال الخلايا المفقودة
-                            while (row.length < 6) {
-                                html += '<td>-</td>';
-                                row.push('-');
-                            }
-                            html += '</tr>';
-                        });
-                        
-                        tableBody.innerHTML = html;
+                        displayNumbers(data.aaData);
+                        document.getElementById('numbersCount').textContent = data.aaData.length;
+                        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ar-EG');
                         addToLog(`✅ تم عرض ${data.aaData.length} رقم`, 'success');
                         showStatus(`✅ تم تحميل ${data.aaData.length} رقم`, 'success');
+                        resolve(data);
                     } else {
-                        tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">لا توجد بيانات</td></tr>';
+                        reject(new Error('بيانات غير صالحة'));
                     }
                     
                     document.body.removeChild(script);
@@ -499,19 +539,99 @@
                 };
                 
                 script.onerror = function() {
-                    tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: red;">خطأ في التحميل</td></tr>';
-                    addToLog('❌ فشل تحميل الأرقام', 'error');
-                    showStatus('❌ فشل تحميل الأرقام', 'error');
                     document.body.removeChild(script);
                     delete window[callbackName];
+                    reject(new Error('فشل تحميل JSONP'));
                 };
                 
                 document.body.appendChild(script);
                 
+                // مهلة 5 ثواني
+                setTimeout(() => {
+                    if (window[callbackName]) {
+                        reject(new Error('انتهت المهلة'));
+                    }
+                }, 5000);
+            });
+        }
+
+        // طريقة Fetch مع Proxy (بديل)
+        async function fetchNumbersWithProxy() {
+            try {
+                const params = new URLSearchParams({
+                    sEcho: 1,
+                    iColumns: 6,
+                    iDisplayStart: 0,
+                    iDisplayLength: 100
+                });
+                
+                const response = await fetchWithProxy(`${CONFIG.dataUrl}?${params.toString()}`);
+                const data = await response.json();
+                
+                if (data && data.aaData) {
+                    displayNumbers(data.aaData);
+                    document.getElementById('numbersCount').textContent = data.aaData.length;
+                    document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('ar-EG');
+                    addToLog(`✅ تم عرض ${data.aaData.length} رقم`, 'success');
+                    showStatus(`✅ تم تحميل ${data.aaData.length} رقم`, 'success');
+                } else {
+                    throw new Error('بيانات غير صالحة');
+                }
             } catch (error) {
-                addToLog(`❌ خطأ: ${error.message}`, 'error');
-                showStatus(`❌ ${error.message}`, 'error');
+                addToLog(`❌ فشل جلب الأرقام: ${error.message}`, 'error');
+                showStatus('❌ فشل تحميل الأرقام', 'error');
+                
+                document.getElementById('numbersTableBody').innerHTML = 
+                    '<tr><td colspan="7" style="text-align: center; color: red;">فشل تحميل الأرقام</td></tr>';
             }
+        }
+
+        // دالة عرض الأرقام في الجدول
+        function displayNumbers(numbers) {
+            const tableBody = document.getElementById('numbersTableBody');
+            
+            if (!numbers || numbers.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="7" style="text-align: center;">لا توجد أرقام</td></tr>';
+                return;
+            }
+            
+            let html = '';
+            numbers.forEach((row, index) => {
+                html += '<tr>';
+                html += `<td>${index + 1}</td>`; // رقم مسلسل
+                // نضمن وجود 6 خلايا على الأقل
+                for (let i = 0; i < 6; i++) {
+                    html += `<td>${row[i] || '-'}</td>`;
+                }
+                html += '</tr>';
+            });
+            
+            tableBody.innerHTML = html;
+        }
+
+        // =============================================
+        // دوال إضافية
+        // =============================================
+        function showDashboard() {
+            const iframe = document.createElement('iframe');
+            iframe.src = CONFIG.dashboardUrl;
+            iframe.style.width = '100%';
+            iframe.style.height = '500px';
+            iframe.style.border = '2px solid #007bff';
+            iframe.style.borderRadius = '10px';
+            iframe.style.marginTop = '20px';
+            
+            const container = document.querySelector('.container');
+            const oldIframe = document.getElementById('dashboardFrame');
+            
+            if (oldIframe) {
+                container.removeChild(oldIframe);
+            }
+            
+            iframe.id = 'dashboardFrame';
+            container.appendChild(iframe);
+            
+            addToLog('🖼️ عرض لوحة التحكم', 'info');
         }
 
         function clearLog() {
@@ -520,17 +640,20 @@
         }
 
         // =============================================
-        // تهيئة الأحداث
+        // تهيئة الصفحة
         // =============================================
         document.addEventListener('DOMContentLoaded', () => {
             addToLog('✅ تم تحميل الصفحة', 'success');
-            addToLog('📌 تذكر: افتح رابط CORS Proxy أولاً', 'warning');
-            showStatus('✅ النظام جاهز - افتح رابط CORS Proxy أولاً', 'info');
+            addToLog('📌 PHPSESSID: ' + PHPSESSID, 'info');
+            updateSessionStatus(false);
             
-            document.getElementById('loginBtn').onclick = autoLogin;
-            document.getElementById('dashboardBtn').onclick = showDashboard;
-            document.getElementById('numbersBtn').onclick = fetchNumbers;
-            document.getElementById('clearBtn').onclick = clearLog;
+            // أزرار التحكم
+            document.getElementById('loginBtn').addEventListener('click', login);
+            document.getElementById('dashboardBtn').addEventListener('click', showDashboard);
+            document.getElementById('refreshNumbersBtn').addEventListener('click', fetchNumbers);
+            document.getElementById('clearBtn').addEventListener('click', clearLog);
+            
+            showStatus('✅ النظام جاهز - اضغط على زر تسجيل الدخول', 'info');
         });
     </script>
 </body>

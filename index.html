@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>لوحة تحكم SMS</title>
+    <title>نظام إدارة SMS - نسخة متطورة</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -64,6 +64,70 @@
         #showNumbersBtn:hover {
             background-color: #117a8b;
         }
+        
+        /* تنسيقات نموذج الكابتشا */
+        .captcha-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .captcha-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            border-radius: 10px;
+            width: 350px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        .captcha-content h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .captcha-image {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+        }
+        .captcha-image img {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ddd;
+        }
+        .captcha-input {
+            width: 100px;
+            padding: 10px;
+            font-size: 18px;
+            text-align: center;
+            margin: 10px auto;
+            display: block;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+        }
+        .captcha-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .captcha-buttons button {
+            padding: 8px 20px;
+            font-size: 14px;
+        }
+        #confirmCaptcha {
+            background-color: #28a745;
+        }
+        #cancelCaptcha {
+            background-color: #dc3545;
+        }
+        
         iframe {
             width: 100%;
             height: 600px;
@@ -80,7 +144,7 @@
             border: 1px solid #dee2e6;
             border-radius: 5px;
             overflow-x: auto;
-            direction: ltr; /* لعرض الجدول بشكل صحيح */
+            direction: ltr;
         }
         table {
             width: 100%;
@@ -107,27 +171,44 @@
         .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>نظام إدارة SMS</h1>
+        <h1>نظام إدارة SMS - نسخة متطورة</h1>
 
         <!-- رسائل الحالة -->
         <div id="statusMessage" class="status-message" style="display: none;"></div>
 
         <!-- أزرار التحكم -->
         <div class="actions">
-            <button id="loginBtn">🔑 تسجيل الدخول</button>
+            <button id="loginBtn">🔑 تسجيل الدخول مع الكابتشا</button>
             <button id="dashboardBtn">📊 عرض لوحة التحكم (Dashboard)</button>
             <button id="showNumbersBtn">📞 عرض أرقامي</button>
         </div>
 
-        <!-- إطار لعرض الصفحات (Dashboard, MySMSNumbers) -->
+        <!-- نافذة الكابتشا المنبثقة -->
+        <div id="captchaModal" class="captcha-modal">
+            <div class="captcha-content">
+                <h3>🔐 أدخل رمز الكابتشا</h3>
+                <p>قم بإدخال ناتج جمع الرقمين الظاهرين في الصورة</p>
+                <div class="captcha-image">
+                    <img id="captchaImage" src="" alt="صورة الكابتشا">
+                </div>
+                <input type="text" id="captchaInput" class="captcha-input" placeholder="النتيجة" maxlength="2">
+                <div class="captcha-buttons">
+                    <button id="confirmCaptcha">تأكيد</button>
+                    <button id="cancelCaptcha">إلغاء</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- إطار لعرض الصفحات -->
         <h2>المحتوى المستعرض:</h2>
         <iframe id="contentFrame" src="about:blank" title="عرض المحتوى عن بعد"></iframe>
 
-        <!-- مكان لعرض الأرقام بنص عادي (اختياري) -->
+        <!-- مكان لعرض الأرقام -->
         <div id="numbersDisplay" style="display: none;">
             <h2>📋 أرقام SMS الخاصة بي</h2>
             <div id="numbersTableContainer">جاري تحميل الأرقام...</div>
@@ -135,47 +216,165 @@
     </div>
 
     <script>
-        // نستخدم نفس الجلسة (Session ID) لجميع الطلبات
+        // =============================================
+        // الإعدادات الأساسية
+        // =============================================
         const BASE_URL = 'http://54.39.104.241/ints';
-        // PHPSESSID ثابت من طلبات الـ curl الخاصة بك
-        // ملاحظة: قد تنتهي صلاحية هذا المعرف ويجب تحديثه من متصفحك بعد تسجيل الدخول مرة أخرى.
         const PHPSESSID = '6600b87d11351991b8b754ae9dfd0a70';
         
-        // بيانات تسجيل الدخول
+        // بيانات تسجيل الدخول الأساسية (بدون الكابتشا)
         const loginData = {
             username: '1Lmohamedabed',
-            password: '1Lmohamedabed',
-            capt: '6'
+            password: '1Lmohamedabed'
         };
 
-        // دالة لعرض رسالة الحالة
+        console.log('🚀 تم تحميل الصفحة. الإعدادات:', { BASE_URL, PHPSESSID, username: loginData.username });
+
+        // =============================================
+        // دوال مساعدة
+        // =============================================
         function showMessage(message, type = 'info') {
+            console.log(`[UI] ${type.toUpperCase()}: ${message}`);
             const msgDiv = document.getElementById('statusMessage');
             msgDiv.style.display = 'block';
             msgDiv.className = `status-message ${type}`;
             msgDiv.textContent = message;
             
-            // إخفاء الرسالة بعد 5 ثواني
             setTimeout(() => {
                 msgDiv.style.display = 'none';
             }, 5000);
         }
 
-        // دالة لتحديث عنوان الإطار
         function updateIframe(url) {
+            console.log(`🖼️ تحديث الإطار إلى: ${url}`);
             const iframe = document.getElementById('contentFrame');
             iframe.src = url;
             showMessage(`جاري تحميل: ${url}`, 'info');
         }
 
-        // دالة تنفيذ تسجيل الدخول باستخدام Fetch API
-        async function performLogin() {
-            showMessage('محاولة تسجيل الدخول...', 'info');
+        // =============================================
+        // دوال الكابتشا
+        // =============================================
+        async function fetchCaptchaImage() {
+            console.log('📸 محاولة جلب صورة الكابتشا...');
             
-            // إعدادات الطلب كما في طلب curl
-            const formBody = new URLSearchParams(loginData).toString();
+            // محاولة جلب الصورة من مسارين محتملين
+            const captchaPaths = [
+                '/captcha.php',
+                '/captcha',
+                '/securimage/securimage_show.php',
+                '/captcha/image'
+            ];
+            
+            // سنحاول المسار الأول فقط لأنه الأكثر شيوعاً
+            // إذا فشل، يمكننا تجربة المسارات الأخرى
+            const captchaUrl = `${BASE_URL}/captcha.php?t=${new Date().getTime()}`;
+            console.log('🔗 رابط الكابتشا:', captchaUrl);
+            
+            try {
+                // نحاول تحميل الصورة
+                const response = await fetch(captchaUrl, {
+                    headers: {
+                        'Cookie': `PHPSESSID=${PHPSESSID}`,
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    }
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    console.log('✅ تم تحميل صورة الكابتشا بنجاح');
+                    return imageUrl;
+                } else {
+                    console.error('❌ فشل تحميل الكابتشا:', response.status, response.statusText);
+                    
+                    // إذا فشل الطلب، نستخدم صورة بديلة من الرابط الأصلي
+                    console.log('⚠️ استخدام رابط الكابتشا الأصلي مباشرة');
+                    return captchaUrl; // نعيد الرابط مباشرة لنضعه في src
+                }
+            } catch (error) {
+                console.error('❌ خطأ في تحميل الكابتشا:', error);
+                // في حالة الخطأ، نعيد رابط الصورة الأصلي
+                return captchaUrl;
+            }
+        }
+
+        // عرض نافذة الكابتشا
+        function showCaptchaModal() {
+            console.log('🪟 فتح نافذة الكابتشا');
+            return new Promise(async (resolve, reject) => {
+                const modal = document.getElementById('captchaModal');
+                const captchaImg = document.getElementById('captchaImage');
+                const captchaInput = document.getElementById('captchaInput');
+                const confirmBtn = document.getElementById('confirmCaptcha');
+                const cancelBtn = document.getElementById('cancelCaptcha');
+                
+                // جلب صورة الكابتشا
+                const imgSrc = await fetchCaptchaImage();
+                captchaImg.src = imgSrc;
+                captchaInput.value = '';
+                
+                // عرض النافذة
+                modal.style.display = 'block';
+                console.log('👁️ نافذة الكابتشا ظاهرة للمستخدم');
+                
+                // معالج التأكيد
+                const onConfirm = () => {
+                    const captchaValue = captchaInput.value.trim();
+                    console.log('🔢 المستخدم أدخل قيمة الكابتشا:', captchaValue);
+                    
+                    if (captchaValue === '') {
+                        console.warn('⚠️ المستخدم لم يدخل قيمة الكابتشا');
+                        showMessage('الرجاء إدخال قيمة الكابتشا', 'warning');
+                        return;
+                    }
+                    
+                    modal.style.display = 'none';
+                    cleanup();
+                    resolve(captchaValue);
+                };
+                
+                // معالج الإلغاء
+                const onCancel = () => {
+                    console.log('❌ المستخدم ألغى عملية الكابتشا');
+                    modal.style.display = 'none';
+                    cleanup();
+                    reject(new Error('تم إلغاء عملية الكابتشا من قبل المستخدم'));
+                };
+                
+                // تنظيف المستمعين
+                const cleanup = () => {
+                    confirmBtn.removeEventListener('click', onConfirm);
+                    cancelBtn.removeEventListener('click', onCancel);
+                };
+                
+                confirmBtn.addEventListener('click', onConfirm);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        // =============================================
+        // دوال تسجيل الدخول
+        // =============================================
+        async function performLogin(captchaValue) {
+            console.log('🔐 بدء عملية تسجيل الدخول...');
+            console.log('📊 بيانات تسجيل الدخول:', { 
+                username: loginData.username, 
+                password: '********', 
+                capt: captchaValue 
+            });
+            
+            const fullLoginData = {
+                ...loginData,
+                capt: captchaValue
+            };
+            
+            const formBody = new URLSearchParams(fullLoginData).toString();
+            console.log('📦 جسم الطلب:', formBody);
 
             try {
+                console.log('📤 إرسال طلب تسجيل الدخول إلى:', `${BASE_URL}/signin`);
+                
                 const response = await fetch(`${BASE_URL}/signin`, {
                     method: 'POST',
                     headers: {
@@ -185,38 +384,82 @@
                         'Cookie': `PHPSESSID=${PHPSESSID}`,
                         'Origin': BASE_URL,
                         'Referer': `${BASE_URL}/login`,
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
                     },
                     body: formBody,
-                    credentials: 'include' // مهم لتضمين الكوكيز في الطلب
+                    credentials: 'include'
+                });
+
+                console.log('📥 استلام رد من السيرفر:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    headers: Object.fromEntries(response.headers.entries())
                 });
 
                 if (response.ok) {
+                    console.log('✅ تسجيل الدخول ناجح!');
                     showMessage('✅ تم تسجيل الدخول بنجاح!', 'success');
-                    // بعد تسجيل الدخول، يمكن عرض الصفحة التي تليها
+                    
+                    // قراءة محتوى الرد (قد يكون HTML)
+                    const responseText = await response.text();
+                    console.log('📄 محتوى الرد (أول 200 حرف):', responseText.substring(0, 200) + '...');
+                    
+                    // التحقق من وجود أخطاء في الرد
+                    if (responseText.includes('خطأ') || responseText.includes('فشل')) {
+                        console.warn('⚠️可能存在 خطأ في تسجيل الدخول:', responseText.substring(0, 500));
+                    }
+                    
                     updateIframe(`${BASE_URL}/client/`);
                 } else {
+                    console.error('❌ فشل تسجيل الدخول:', response.status, response.statusText);
                     showMessage(`❌ فشل تسجيل الدخول. الحالة: ${response.status}`, 'error');
+                    
+                    // قراءة محتوى الخطأ
+                    const errorText = await response.text();
+                    console.error('📄 محتوى الخطأ:', errorText);
                 }
             } catch (error) {
-                console.error('خطأ في طلب تسجيل الدخول:', error);
+                console.error('💥 خطأ في شبكة تسجيل الدخول:', error);
+                console.error('📋 تفاصيل الخطأ:', {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
                 showMessage(`❌ حدث خطأ في الشبكة: ${error.message}`, 'error');
             }
         }
 
-        // دالة جلب أرقام SMS باستخدام JSONP (للتغلب على CORS)
+        // دالة تسجيل الدخول الرئيسية (التي تبدأ بعرض الكابتشا)
+        async function loginWithCaptcha() {
+            console.log('🔄 بدء عملية تسجيل الدخول مع الكابتشا');
+            
+            try {
+                // عرض نافذة الكابتشا وانتظار إدخال المستخدم
+                const captchaValue = await showCaptchaModal();
+                console.log('✅ تم الحصول على قيمة الكابتشا:', captchaValue);
+                
+                // تنفيذ تسجيل الدخول
+                await performLogin(captchaValue);
+                
+            } catch (error) {
+                console.error('❌ فشلت عملية تسجيل الدخول مع الكابتشا:', error.message);
+                showMessage(error.message, 'error');
+            }
+        }
+
+        // =============================================
+        // دوال جلب أرقام SMS
+        // =============================================
         function fetchSMSNumbers() {
+            console.log('📞 بدء عملية جلب أرقام SMS...');
             showMessage('جاري تحميل أرقام SMS...', 'info');
             
-            // إخفاء المحتوى السابق وعرض مكان الأرقام
             const numbersDiv = document.getElementById('numbersDisplay');
             const tableContainer = document.getElementById('numbersTableContainer');
             numbersDiv.style.display = 'block';
             tableContainer.innerHTML = 'جاري التحميل...';
 
-            // رابط API للأرقام مع إضافة callback لـ JSONP
-            // تم استخراج المعاملات من طلب curl الأخير
-            const timestamp = new Date().getTime(); // لمنع التخزين المؤقت
+            const timestamp = new Date().getTime();
             const dataUrl = `${BASE_URL}/client/res/data_smsnumbers.php?` + 
                 `frange=&fclient=&sEcho=1&iColumns=6&sColumns=%2C%2C%2C%2C%2C&iDisplayStart=0&iDisplayLength=25&` +
                 `mDataProp_0=0&sSearch_0=&bRegex_0=false&bSearchable_0=true&bSortable_0=true&` +
@@ -226,82 +469,112 @@
                 `mDataProp_4=4&sSearch_4=&bRegex_4=false&bSearchable_4=true&bSortable_4=true&` +
                 `mDataProp_5=5&sSearch_5=&bRegex_5=false&bSearchable_5=true&bSortable_5=true&` +
                 `sSearch=&bRegex=false&iSortCol_0=0&sSortDir_0=asc&iSortingCols=1&_=${timestamp}` +
-                `&callback=parseSMSNumbers`; // إضافة callback لوظيفة JSONP
+                `&callback=parseSMSNumbers`;
 
-            // إنشاء عنصر script ديناميكيًا لتنفيذ JSONP
+            console.log('🔗 رابط جلب الأرقام (JSONP):', dataUrl);
+            console.log('📦 معاملات الطلب:', {
+                timestamp,
+                callback: 'parseSMSNumbers'
+            });
+
             const script = document.createElement('script');
             script.src = dataUrl;
 
-            // تعريف الدالة العامة التي سيتم استدعاؤها عند نجاح الطلب
             window.parseSMSNumbers = function(data) {
-                console.log('تم استلام البيانات:', data);
+                console.log('📥 استلام بيانات JSONP:', data);
+                
                 if (data && data.aaData && Array.isArray(data.aaData)) {
+                    console.log(`✅ تم استلام ${data.aaData.length} سجل من الأرقام`);
+                    console.log('📊 أول سجل:', data.aaData[0]);
                     displayNumbersTable(data.aaData);
                     showMessage(`✅ تم تحميل ${data.aaData.length} رقم بنجاح.`, 'success');
                 } else {
-                    tableContainer.innerHTML = 'لم يتم العثور على أرقام.';
+                    console.warn('⚠️ البيانات المستلمة لا تحتوي على aaData:', data);
+                    tableContainer.innerHTML = 'لم يتم العثور على أرقام أو البيانات غير متوقعة.';
                     showMessage('✅ تم التحميل ولكن لا توجد أرقام.', 'info');
                 }
-                // تنظيف: إزالة عنصر script بعد التنفيذ
+                
                 document.body.removeChild(script);
                 delete window.parseSMSNumbers;
+                console.log('🧹 تنظيف: تم إزالة سكريبت JSONP');
             };
 
-            // معالجة الأخطاء (إذا فشل تحميل السكريبت)
-            script.onerror = function() {
-                tableContainer.innerHTML = 'حدث خطأ أثناء تحميل الأرقام. قد يكون بسبب سياسة CORS أو أن الرابط غير صحيح.';
+            script.onerror = function(error) {
+                console.error('💥 فشل تحميل سكريبت JSONP:', error);
+                tableContainer.innerHTML = 'حدث خطأ أثناء تحميل الأرقام. تحقق من وحدة التحكم (F12) لمزيد من التفاصيل.';
                 showMessage('❌ فشل تحميل الأرقام. تحقق من اتصالك بالسيرفر.', 'error');
                 document.body.removeChild(script);
                 delete window.parseSMSNumbers;
             };
 
-            // إضافة السكريبت إلى الصفحة لبدء الطلب
+            console.log('📤 إرسال طلب JSONP...');
             document.body.appendChild(script);
         }
 
-        // دالة عرض الأرقام في جدول
         function displayNumbersTable(data) {
+            console.log('📊 عرض الأرقام في جدول...');
             const tableContainer = document.getElementById('numbersTableContainer');
             
             if (!data || data.length === 0) {
+                console.log('📭 لا توجد بيانات لعرضها');
                 tableContainer.innerHTML = '<p>لا توجد أرقام لعرضها.</p>';
                 return;
             }
 
-            // بناء الجدول
             let html = '<table><thead><tr>';
-            // إضافة عناوين الأعمدة (افتراضية)
             html += '<th>المعرف</th><th>الرقم</th><th>الحالة</th><th>نوع الخدمة</th><th>تاريخ الإنشاء</th><th>ملاحظات</th>';
             html += '</tr></thead><tbody>';
 
-            data.forEach(row => {
+            data.forEach((row, index) => {
                 html += '<tr>';
-                row.forEach(cell => {
+                row.forEach((cell, cellIndex) => {
                     html += `<td>${cell || ''}</td>`;
                 });
                 html += '</tr>';
+                
+                if (index === 0) {
+                    console.log('🔍 نموذج صف:', row);
+                }
             });
 
             html += '</tbody></table>';
             tableContainer.innerHTML = html;
+            console.log('✅ تم عرض الجدول بنجاح');
         }
 
-        // -- أحداث الأزرار --
-        document.getElementById('loginBtn').addEventListener('click', performLogin);
+        // =============================================
+        // أحداث الأزرار والتهيئة
+        // =============================================
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('✅ DOM جاهز، بدء تهيئة الأحداث');
+            
+            document.getElementById('loginBtn').addEventListener('click', () => {
+                console.log('🖱️ المستخدم ضغط على زر تسجيل الدخول');
+                loginWithCaptcha();
+            });
 
-        document.getElementById('dashboardBtn').addEventListener('click', () => {
-            updateIframe(`${BASE_URL}/client/SMSDashboard`);
+            document.getElementById('dashboardBtn').addEventListener('click', () => {
+                console.log('🖱️ المستخدم ضغط على زر عرض لوحة التحكم');
+                updateIframe(`${BASE_URL}/client/SMSDashboard`);
+            });
+
+            document.getElementById('showNumbersBtn').addEventListener('click', () => {
+                console.log('🖱️ المستخدم ضغط على زر عرض أرقامي');
+                fetchSMSNumbers();
+            });
+
+            console.log('🎉 تم تحميل الصفحة بنجاح');
+            showMessage('مرحباً! استخدم الأزرار أعلاه للتحكم. افتح وحدة التحكم (F12) لمشاهدة التفاصيل.', 'info');
         });
 
-        document.getElementById('showNumbersBtn').addEventListener('click', () => {
-            // محاولة جلب الأرقام عبر JSONP
-            fetchSMSNumbers();
-            // يمكن أيضاً عرض الصفحة كاملة في الإطار (أقل تفضيلاً بسبب CORS)
-            // updateIframe(`${BASE_URL}/client/MySMSNumbers`);
+        // إغلاق النافذة إذا ضغط المستخدم خارجها
+        window.addEventListener('click', (event) => {
+            const modal = document.getElementById('captchaModal');
+            if (event.target === modal) {
+                console.log('👆 المستخدم ضغط خارج نافذة الكابتشا');
+                modal.style.display = 'none';
+            }
         });
-
-        // رسالة ترحيب عند تحميل الصفحة
-        showMessage('مرحباً! استخدم الأزرار أعلاه للتحكم.', 'info');
     </script>
 </body>
 </html>

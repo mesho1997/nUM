@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XISORA Pro - ???????? ??????</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* ??? ????????? ??????? ?? ?????: */
+        .pro-badge {
+            background: linear-gradient(45deg, #ffd966, #ffb347);
+            color: #0b2b4f;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+        
+        .floating-ai {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: var(--bg-secondary);
+            border-radius: 60px;
+            padding: 15px 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 2px solid var(--accent);
+            z-index: 1000;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .floating-ai:hover {
+            transform: scale(1.05);
+        }
+        
+        .ai-indicator {
+            width: 12px;
+            height: 12px;
+            background: #4CAF50;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: 50px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin: 20px 0;
+        }
+        
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-item {
+            background: var(--bg-primary);
+            padding: 15px;
+            border-radius: 20px;
+            text-align: center;
+        }
+        
+        .smart-suggestions {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 30px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- ????? AI ???? -->
+    <div class="floating-ai" id="aiAssistant">
+        <span class="ai-indicator"></span>
+        <i class="fas fa-robot"></i>
+        <span>??????? ????? ???</span>
+    </div>
+
+    <!-- ????? ??????? ??????? -->
+    <div class="modal" id="analyticsModal">
+        <div class="modal-content">
+            <h2><i class="fas fa-chart-pie"></i> ????? ?????</h2>
+            
+            <div class="quick-stats">
+                <div class="stat-item">
+                    <i class="fas fa-hashtag"></i>
+                    <h3 id="totalNumbers">0</h3>
+                    <p>?????? ???????</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-repeat"></i>
+                    <h3 id="duplicateRate">0%</h3>
+                    <p>???? ???????</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-flag"></i>
+                    <h3 id="countryCount">0</h3>
+                    <p>??? ?????</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-clock"></i>
+                    <h3 id="peakTime">-</h3>
+                    <p>??? ??????</p>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="countryChart"></canvas>
+            </div>
+
+            <div class="smart-suggestions" id="smartSuggestions">
+                <i class="fas fa-lightbulb"></i>
+                <span>????? ??? ????...</span>
+            </div>
+
+            <button class="primary-btn" onclick="closeModal()">
+                <i class="fas fa-check"></i> ?????
+            </button>
+        </div>
+    </div>
+
+    <!-- ???? ?????? ??? ?? ?? ????? ?? ??????? ??????? -->
+    <div class="actions">
+        <button class="primary-btn" id="sortBtn">
+            <i class="fas fa-magnifying-glass"></i> ??? ???????
+        </button>
+        <button class="secondary-btn" id="analyticsBtn">
+            <i class="fas fa-chart-simple"></i> ????? ?????
+        </button>
+        <button class="secondary-btn" id="resetBtn">
+            <i class="fas fa-rotate-right"></i> ?????
+        </button>
+    </div>
+
+    <script>
+        // ???? ?????? ????????? ???????
+        class XISORAProAI {
+            constructor() {
+                this.patterns = new Map();
+                this.suggestions = [];
+            }
+
+            analyzeNumbers(numbers) {
+                const analysis = {
+                    total: numbers.length,
+                    unique: new Set(numbers).size,
+                    byCountry: this.groupByCountry(numbers),
+                    patterns: this.detectPatterns(numbers),
+                    anomalies: this.detectAnomalies(numbers),
+                    peakHours: this.analyzeTimePatterns(numbers),
+                    suggestions: []
+                };
+
+                // ????? ???????? ????
+                if (analysis.duplicateRate > 30) {
+                    analysis.suggestions.push('?? ???? ??????? ????? - ?? ????? ??????? ??????? ???????');
+                }
+                
+                if (analysis.byCountry.size > 5) {
+                    analysis.suggestions.push('?? ????? ?? ??? ??? - ???? ??????? ??? ??????');
+                }
+
+                return analysis;
+            }
+
+            groupByCountry(numbers) {
+                const countries = new Map();
+                numbers.forEach(num => {
+                    const code = num.substring(0, 3);
+                    countries.set(code, (countries.get(code) || 0) + 1);
+                });
+                return countries;
+            }
+
+            detectPatterns(numbers) {
+                const patterns = [];
+                numbers.forEach(num => {
+                    // ??? ??????? ?????????
+                    if (this.isSequential(num)) {
+                        patterns.push({num, pattern: '??????'});
+                    }
+                    // ??? ??????? ????????
+                    if (this.isRepeating(num)) {
+                        patterns.push({num, pattern: '????'});
+                    }
+                });
+                return patterns;
+            }
+
+            isSequential(num) {
+                for(let i = 0; i < num.length - 1; i++) {
+                    if (Math.abs(parseInt(num[i+1]) - parseInt(num[i])) !== 1) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            isRepeating(num) {
+                const first = num[0];
+                return num.split('').every(d => d === first);
+            }
+
+            detectAnomalies(numbers) {
+                // ??? ??????? ???????? (??? 000000, 123456)
+                const anomalies = [];
+                numbers.forEach(num => {
+                    if (this.isRepeating(num) && num.length > 5) {
+                        anomalies.push({num, reason: '??? ???? ?????'});
+                    }
+                    if (this.isSequential(num) && num.length > 7) {
+                        anomalies.push({num, reason: '????? ??? ?????'});
+                    }
+                });
+                return anomalies;
+            }
+
+            analyzeTimePatterns(numbers) {
+                // ????? ???? ??? ??? ???? ??????
+                // ???? ??????? ??????
+                return {
+                    peakHour: '??? ?????',
+                    averagePerDay: 0
+                };
+            }
+
+            generateSmartSuggestion(analysis) {
+                let suggestion = '';
+                
+                if (analysis.anomalies.length > 0) {
+                    suggestion = `?? ?? ?????? ${analysis.anomalies.length} ??? ??? ????? ????? ????????`;
+                } else if (analysis.patterns.length > 0) {
+                    suggestion = `?? ???? ${analysis.patterns.length} ??? ???? ??? (??????/????)`;
+                } else {
+                    suggestion = '? ???? ??????? ???? ??????';
+                }
+
+                return suggestion;
+            }
+        }
+
+        // ????? ?????? ?????????
+        const xisoraAI = new XISORAProAI();
+
+        // ???? ??????? ?????? ???????
+        class XISORAStorage {
+            constructor() {
+                this.storageKey = 'XISORA_PRO_DATA';
+            }
+
+            saveState(state) {
+                localStorage.setItem(this.storageKey, JSON.stringify({
+                    ...state,
+                    timestamp: new Date().toISOString()
+                }));
+            }
+
+            loadState() {
+                return JSON.parse(localStorage.getItem(this.storageKey)) || null;
+            }
+
+            saveFavoriteList(name, numbers) {
+                const favorites = this.getFavorites() || {};
+                favorites[name] = {
+                    numbers,
+                    date: new Date().toISOString()
+                };
+                localStorage.setItem('XISORA_FAVORITES', JSON.stringify(favorites));
+            }
+
+            getFavorites() {
+                return JSON.parse(localStorage.getItem('XISORA_FAVORITES')) || {};
+            }
+        }
+
+        const storage = new XISORAStorage();
+
+        // ???? ????????? ??????
+        class XISORANotifications {
+            static async notify(title, message, type = 'info') {
+                if (Notification.permission === 'granted') {
+                    new Notification(title, {
+                        body: message,
+                        icon: '/icon.png',
+                        badge: '/badge.png'
+                    });
+                } else if (Notification.permission !== 'denied') {
+                    await Notification.requestPermission();
+                }
+            }
+
+            static showToast(message, duration = 3000) {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    background: #1e3a6b;
+                    color: white;
+                    padding: 15px 30px;
+                    border-radius: 50px;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+                    z-index: 9999;
+                    animation: slideIn 0.3s;
+                `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, duration);
+            }
+        }
+
+        // ????? ??????? ???????
+        document.getElementById('analyticsBtn').addEventListener('click', () => {
+            const numbers = [...extractNumbers(list1.value), ...extractNumbers(list2.value)];
+            const analysis = xisoraAI.analyzeNumbers(numbers);
+            
+            // ????? ??????????
+            document.getElementById('totalNumbers').textContent = numbers.length;
+            document.getElementById('duplicateRate').textContent = 
+                Math.round((1 - analysis.unique / numbers.length) * 100) + '%';
+            
+            // ??? ????? ?????
+            const ctx = document.getElementById('countryChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: [...analysis.byCountry.keys()],
+                    datasets: [{
+                        data: [...analysis.byCountry.values()],
+                        backgroundColor: ['#ffd966', '#1e3a6b', '#4CAF50', '#f44336', '#9C27B0']
+                    }]
+                }
+            });
+
+            // ???????? ????
+            document.getElementById('smartSuggestions').innerHTML = `
+                <i class="fas fa-robot"></i>
+                <div>
+                    <h3>?? ????? ???</h3>
+                    <p>${xisoraAI.generateSmartSuggestion(analysis)}</p>
+                    ${analysis.anomalies.length > 0 ? 
+                        `<small>????: ${analysis.anomalies[0].num} - ${analysis.anomalies[0].reason}</small>` : ''}
+                </div>
+            `;
+
+            document.getElementById('analyticsModal').classList.add('active');
+        });
+
+        // ??? ???????? ?????? ????????
+        window.addEventListener('load', () => {
+            const saved = storage.loadState();
+            if (saved) {
+                list1.value = saved.list1 || '';
+                list2.value = saved.list2 || '';
+                XISORANotifications.showToast('?? ??????? ??? ???? ???');
+            }
+        });
+
+        window.addEventListener('beforeunload', () => {
+            storage.saveState({
+                list1: list1.value,
+                list2: list2.value
+            });
+        });
+
+        // ????? ????????? ??? ???????? ?? ????? ??????
+        const originalSort = performSort;
+        performSort = function() {
+            XISORANotifications.showToast('???? ?????... ?? ?????? ??? ????');
+            
+            // ?????? ????? ?????
+            setTimeout(() => {
+                originalSort();
+                XISORANotifications.notify('XISORA Pro', '?? ???????? ?? ??? ??????? ?????');
+            }, 100);
+        };
+
+        // ????? ???????
+        window.closeModal = function() {
+            document.getElementById('analyticsModal').classList.remove('active');
+        };
+
+        // ????? ??????? ?????
+        document.getElementById('aiAssistant').addEventListener('click', () => {
+            XISORANotifications.showToast('? ??????? ?????: ???? ????????');
+            document.getElementById('analyticsBtn').click();
+        });
+
+        // ????? ????? ??? ??????? ???????
+        const saveListBtn = document.createElement('button');
+        saveListBtn.className = 'result-btn';
+        saveListBtn.innerHTML = '<i class="fas fa-heart"></i> ??? ??????';
+        saveListBtn.onclick = () => {
+            const name = prompt('???? ??? ???????:');
+            if (name) {
+                storage.saveFavoriteList(name, resultBox.innerText);
+                XISORANotifications.showToast('? ?? ??? ??????? ?? ???????');
+            }
+        };
+        document.querySelector('.result-actions').appendChild(saveListBtn);
+    </script>
+</body>
+</html>

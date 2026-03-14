@@ -3,655 +3,490 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام إدارة SMS - نسخة متطورة</title>
+    <title>نظام إدارة SMS</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        * {
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        .container {
-            max-width: 95%;
-            margin: auto;
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1, h2 {
-            color: #0056b3;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-        .actions {
-            margin: 20px 0;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-        button {
-            padding: 12px 25px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.1s ease;
-        }
-        button:active {
-            transform: scale(0.98);
-        }
-        #loginBtn {
-            background-color: #28a745;
-            color: white;
-        }
-        #loginBtn:hover {
-            background-color: #218838;
-        }
-        #dashboardBtn {
-            background-color: #007bff;
-            color: white;
-        }
-        #dashboardBtn:hover {
-            background-color: #0056b3;
-        }
-        #showNumbersBtn {
-            background-color: #17a2b8;
-            color: white;
-        }
-        #showNumbersBtn:hover {
-            background-color: #117a8b;
+            padding: 0;
+            box-sizing: border-box;
         }
         
-        /* تنسيقات نموذج الكابتشا */
-        .captcha-modal {
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 24px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+        
+        #loginBtn {
+            background: #28a745;
+            color: white;
+        }
+        
+        #loginBtn:hover {
+            background: #218838;
+            transform: translateY(-2px);
+        }
+        
+        #dashboardBtn {
+            background: #007bff;
+            color: white;
+        }
+        
+        #dashboardBtn:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        
+        #showNumbersBtn {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        #showNumbersBtn:hover {
+            background: #117a8b;
+            transform: translateY(-2px);
+        }
+        
+        /* نافذة الكابتشا */
+        .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
-            left: 0;
             top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
         }
-        .captcha-content {
-            background-color: #fefefe;
-            margin: 15% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            border-radius: 10px;
-            width: 400px;
-            max-width: 90%;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
             text-align: center;
         }
-        .captcha-content h3 {
-            margin-top: 0;
+        
+        .modal h3 {
             color: #333;
+            margin-bottom: 20px;
         }
-        .captcha-image {
-            margin: 15px 0;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            min-height: 80px;
+        
+        .captcha-container {
+            margin: 20px 0;
+            min-height: 100px;
             display: flex;
             justify-content: center;
             align-items: center;
         }
-        .captcha-image img {
+        
+        .captcha-image {
             max-width: 100%;
-            height: auto;
-            border: 1px solid #ddd;
-            border-radius: 3px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
         }
+        
+        .loading {
+            color: #007bff;
+            margin: 20px 0;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
         .captcha-input {
-            width: 120px;
+            width: 100%;
             padding: 12px;
-            font-size: 20px;
-            text-align: center;
-            margin: 10px auto;
-            display: block;
+            margin: 15px 0;
             border: 2px solid #007bff;
-            border-radius: 5px;
-            font-weight: bold;
+            border-radius: 10px;
+            font-size: 18px;
+            text-align: center;
+            direction: ltr;
         }
+        
         .captcha-buttons {
             display: flex;
             gap: 10px;
-            justify-content: center;
-            margin-top: 15px;
+            margin-top: 20px;
         }
+        
         .captcha-buttons button {
-            padding: 8px 25px;
-            font-size: 14px;
+            flex: 1;
+            padding: 10px;
         }
+        
         #confirmCaptcha {
-            background-color: #28a745;
+            background: #28a745;
+            color: white;
         }
+        
         #cancelCaptcha {
-            background-color: #dc3545;
+            background: #6c757d;
+            color: white;
+        }
+        
+        #refreshCaptcha {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
         
         iframe {
             width: 100%;
-            height: 600px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
             margin-top: 20px;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
+        
         #numbersDisplay {
             margin-top: 20px;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
             overflow-x: auto;
-            direction: ltr;
         }
+        
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 14px;
         }
-        th, td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #dee2e6;
-        }
-        th {
-            background-color: #007bff;
-            color: white;
-            position: sticky;
-            top: 0;
-        }
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        .status-message {
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-weight: bold;
-        }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-        .warning { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
         
-        .loading-spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #007bff;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 10px auto;
+        th {
+            background: #007bff;
+            color: white;
+            padding: 10px;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
         }
-        .captcha-note {
-            font-size: 12px;
-            color: #666;
-            margin: 5px 0;
+        
+        tr:hover {
+            background: #f5f5f5;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📱 نظام إدارة SMS - نسخة متطورة</h1>
-
-        <!-- رسائل الحالة -->
-        <div id="statusMessage" class="status-message" style="display: none;"></div>
-
-        <!-- أزرار التحكم -->
+        <h1>📱 نظام إدارة SMS</h1>
+        
+        <div id="status" class="status info">جاهز للعمل</div>
+        
         <div class="actions">
-            <button id="loginBtn">🔑 تسجيل الدخول مع الكابتشا</button>
-            <button id="dashboardBtn">📊 عرض لوحة التحكم (Dashboard)</button>
-            <button id="showNumbersBtn">📞 عرض أرقامي</button>
+            <button id="loginBtn">🔑 تسجيل الدخول</button>
+            <button id="dashboardBtn">📊 لوحة التحكم</button>
+            <button id="showNumbersBtn">📞 أرقامي</button>
         </div>
-
-        <!-- نافذة الكابتشا المنبثقة -->
-        <div id="captchaModal" class="captcha-modal">
-            <div class="captcha-content">
-                <h3>🔐 أدخل رمز الكابتشا</h3>
-                <p>قم بإدخال ناتج جمع الرقمين الظاهرين في الصورة</p>
-                <div class="captcha-image" id="captchaImageContainer">
-                    <div class="loading-spinner"></div>
-                </div>
-                <div class="captcha-note" id="captchaNote">جاري تحميل صورة الكابتشا...</div>
-                <input type="text" id="captchaInput" class="captcha-input" placeholder="النتيجة" maxlength="2" disabled>
-                <div class="captcha-buttons">
-                    <button id="confirmCaptcha" disabled>تأكيد</button>
-                    <button id="cancelCaptcha">إلغاء</button>
-                    <button id="refreshCaptcha" style="background-color: #ffc107;">🔄 تحديث</button>
-                </div>
+        
+        <iframe id="contentFrame" src="about:blank" style="display: none;"></iframe>
+        
+        <div id="numbersDisplay"></div>
+    </div>
+    
+    <!-- نافذة الكابتشا -->
+    <div class="modal" id="captchaModal">
+        <div class="modal-content">
+            <h3>🔐 أدخل رمز الكابتشا</h3>
+            
+            <div class="captcha-container" id="captchaContainer">
+                <div class="loading">جاري تحميل الصورة...</div>
+            </div>
+            
+            <div class="error-message" id="captchaError"></div>
+            
+            <input type="text" id="captchaInput" class="captcha-input" placeholder="أدخل الرقم" maxlength="2" disabled>
+            
+            <div class="captcha-buttons">
+                <button id="refreshCaptcha">🔄 تحديث</button>
+                <button id="confirmCaptcha" disabled>✔ تأكيد</button>
+                <button id="cancelCaptcha">✖ إلغاء</button>
             </div>
         </div>
-
-        <!-- إطار لعرض الصفحات -->
-        <h2>المحتوى المستعرض:</h2>
-        <iframe id="contentFrame" src="about:blank" title="عرض المحتوى عن بعد" sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-top-navigation"></iframe>
-
-        <!-- مكان لعرض الأرقام -->
-        <div id="numbersDisplay" style="display: none;">
-            <h2>📋 أرقام SMS الخاصة بي</h2>
-            <div id="numbersTableContainer">جاري تحميل الأرقام...</div>
-        </div>
     </div>
-
+    
     <script>
-        // =============================================
-        // الإعدادات الأساسية
-        // =============================================
         const BASE_URL = 'http://54.39.104.241/ints';
-        // PHPSESSID من طلبات الـ curl - قد تحتاج لتحديثه
         const PHPSESSID = '6600b87d11351991b8b754ae9dfd0a70';
         
-        // بيانات تسجيل الدخول الأساسية (بدون الكابتشا)
-        const loginData = {
-            username: '1Lmohamedabed',
-            password: '1Lmohamedabed'
-        };
-
-        // CORS Proxies للتغلب على مشكلة HTTPS/HTTP
-        const CORS_PROXIES = [
-            'https://api.allorigins.win/raw?url=',
-            'https://cors-anywhere.herokuapp.com/',
-            'https://crossorigin.me/',
-            '' // المحاولة المباشرة كخيار أخير
+        // مسارات متعددة للكابتشا
+        const CAPTCHA_PATHS = [
+            '/captcha.php',
+            '/captcha',
+            '/securimage/securimage_show.php',
+            '/captcha/image',
+            '/simple-php-captcha.php',
+            '/captcha/generate',
+            '/captcha.jpg',
+            '/captcha.png'
         ];
-
-        console.log('🚀 تم تحميل الصفحة. الإعدادات:', { BASE_URL, PHPSESSID, username: loginData.username });
-
-        // =============================================
-        // دوال مساعدة
-        // =============================================
-        function showMessage(message, type = 'info') {
-            console.log(`[UI] ${type.toUpperCase()}: ${message}`);
-            const msgDiv = document.getElementById('statusMessage');
-            msgDiv.style.display = 'block';
-            msgDiv.className = `status-message ${type}`;
-            msgDiv.textContent = message;
-            
-            setTimeout(() => {
-                msgDiv.style.display = 'none';
-            }, 5000);
+        
+        let currentCaptchaUrl = '';
+        
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.className = `status ${type}`;
+            status.textContent = message;
+            console.log(`[${type}] ${message}`);
         }
-
+        
         function updateIframe(url) {
-            console.log(`🖼️ تحديث الإطار إلى: ${url}`);
             const iframe = document.getElementById('contentFrame');
+            iframe.style.display = 'block';
             iframe.src = url;
-            showMessage(`جاري تحميل: ${url}`, 'info');
         }
-
-        // =============================================
-        // دوال الكابتشا المتقدمة
-        // =============================================
-        async function fetchCaptchaWithProxy(proxyIndex = 0) {
-            const timestamp = new Date().getTime();
-            const captchaPaths = [
-                '/captcha.php',
-                '/captcha',
-                '/securimage/securimage_show.php',
-                '/captcha/image',
-                '/simple-php-captcha.php',
-                '/captcha/generate'
-            ];
+        
+        // محاولة تحميل الكابتشا من مسارات متعددة
+        async function tryLoadCaptcha() {
+            const container = document.getElementById('captchaContainer');
+            const errorDiv = document.getElementById('captchaError');
+            const input = document.getElementById('captchaInput');
+            const confirmBtn = document.getElementById('confirmCaptcha');
             
-            // تجربة كل مسار مع كل بروكسي
-            for (const path of captchaPaths) {
-                const directUrl = `${BASE_URL}${path}?t=${timestamp}`;
+            errorDiv.textContent = '';
+            
+            // تجربة كل مسار
+            for (const path of CAPTCHA_PATHS) {
+                const url = `${BASE_URL}${path}?t=${Date.now()}`;
+                container.innerHTML = `<div class="loading">جاري تجربة: ${path}</div>`;
                 
-                for (let i = proxyIndex; i < CORS_PROXIES.length; i++) {
-                    const proxy = CORS_PROXIES[i];
-                    let urlToFetch = directUrl;
-                    
-                    if (proxy) {
-                        urlToFetch = proxy + encodeURIComponent(directUrl);
-                    }
-                    
-                    console.log(`🔍 محاولة: Proxy=${proxy || 'مباشر'}, Path=${path}`);
-                    
-                    try {
-                        // إذا كنا نستخدم بروكسي، نتوقع نص وليس صورة
-                        if (proxy) {
-                            const response = await fetch(urlToFetch, {
-                                headers: {
-                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                                }
-                            });
-                            
-                            if (response.ok) {
-                                // البروكسي يعيد محتوى الصفحة كنص
-                                const text = await response.text();
-                                
-                                // تحويل النص إلى blob
-                                const blob = new Blob([text], { type: 'image/jpeg' });
-                                const imageUrl = URL.createObjectURL(blob);
-                                console.log(`✅ نجح مع Proxy: ${proxy}, Path: ${path}`);
-                                return { success: true, url: imageUrl, proxyUsed: proxy, pathUsed: path };
-                            }
-                        } else {
-                            // محاولة مباشرة (قد تنجح مع بعض الصور رغم تحذير Mixed Content)
-                            const img = new Image();
-                            await new Promise((resolve, reject) => {
-                                img.onload = () => {
-                                    console.log(`✅ نجح التحميل المباشر للصورة: ${path}`);
-                                    resolve();
-                                };
-                                img.onerror = () => {
-                                    reject(new Error('فشل تحميل الصورة مباشرة'));
-                                };
-                                img.src = directUrl;
-                            });
-                            
-                            return { success: true, url: directUrl, proxyUsed: 'direct', pathUsed: path };
+                try {
+                    // محاولة تحميل الصورة
+                    const response = await fetch(url, {
+                        headers: {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                            'Cookie': `PHPSESSID=${PHPSESSID}`
                         }
-                    } catch (error) {
-                        console.log(`❌ فشل مع Proxy ${proxy}, Path ${path}:`, error.message);
-                        // استمر في المحاولة
+                    });
+                    
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        if (blob.type.startsWith('image/')) {
+                            const imageUrl = URL.createObjectURL(blob);
+                            container.innerHTML = `<img src="${imageUrl}" class="captcha-image" alt="كابتشا">`;
+                            input.disabled = false;
+                            confirmBtn.disabled = false;
+                            currentCaptchaUrl = url;
+                            showStatus(`✅ تم تحميل الكابتشا من: ${path}`, 'success');
+                            return true;
+                        }
                     }
+                } catch (e) {
+                    console.log(`فشل المسار ${path}:`, e.message);
                 }
             }
             
-            throw new Error('فشلت جميع محاولات تحميل الكابتشا');
+            // إذا فشلت كل المحاولات
+            container.innerHTML = `
+                <div style="text-align: center; color: #dc3545;">
+                    ❌ فشل تحميل الكابتشا<br>
+                    <small>حاول النقر على "تحديث"</small>
+                </div>
+            `;
+            errorDiv.textContent = 'لم نتمكن من تحميل صورة الكابتشا. تأكد من اتصالك بالإنترنت.';
+            return false;
         }
-
+        
         // عرض نافذة الكابتشا
-        function showCaptchaModal() {
-            console.log('🪟 فتح نافذة الكابتشا');
-            return new Promise(async (resolve, reject) => {
-                const modal = document.getElementById('captchaModal');
-                const imageContainer = document.getElementById('captchaImageContainer');
-                const captchaInput = document.getElementById('captchaInput');
-                const confirmBtn = document.getElementById('confirmCaptcha');
-                const cancelBtn = document.getElementById('cancelCaptcha');
-                const refreshBtn = document.getElementById('refreshCaptcha');
-                const captchaNote = document.getElementById('captchaNote');
-                
-                // دالة تحميل الكابتشا
-                async function loadCaptcha() {
-                    // إظهار مؤشر التحميل
-                    imageContainer.innerHTML = '<div class="loading-spinner"></div>';
-                    captchaInput.disabled = true;
-                    confirmBtn.disabled = true;
-                    captchaNote.textContent = 'جاري تحميل صورة الكابتشا...';
-                    
-                    try {
-                        // محاولة تحميل الكابتشا
-                        const result = await fetchCaptchaWithProxy();
-                        
-                        // عرض الصورة
-                        imageContainer.innerHTML = `<img src="${result.url}" alt="صورة الكابتشا" style="max-width: 100%;">`;
-                        captchaInput.disabled = false;
-                        confirmBtn.disabled = false;
-                        captchaNote.textContent = `✅ تم التحميل عبر: ${result.proxyUsed}`;
-                        captchaInput.value = '';
-                        captchaInput.focus();
-                        
-                        console.log('✅ تم تحميل الكابتشا:', result);
-                    } catch (error) {
-                        console.error('❌ فشل تحميل الكابتشا:', error);
-                        imageContainer.innerHTML = '<div style="color: red; padding: 20px;">❌ فشل تحميل الكابتشا<br>انقر على "تحديث" للمحاولة مرة أخرى</div>';
-                        captchaNote.textContent = 'فشل التحميل. حاول مرة أخرى.';
-                    }
-                }
-                
-                // تحميل الكابتشا لأول مرة
-                await loadCaptcha();
-                
-                // عرض النافذة
-                modal.style.display = 'block';
-                console.log('👁️ نافذة الكابتشا ظاهرة للمستخدم');
-                
-                // معالج التأكيد
+        async function showCaptchaModal() {
+            const modal = document.getElementById('captchaModal');
+            const input = document.getElementById('captchaInput');
+            const confirmBtn = document.getElementById('confirmCaptcha');
+            const refreshBtn = document.getElementById('refreshCaptcha');
+            const cancelBtn = document.getElementById('cancelCaptcha');
+            
+            modal.style.display = 'flex';
+            input.value = '';
+            input.disabled = true;
+            confirmBtn.disabled = true;
+            
+            // محاولة تحميل الكابتشا
+            await tryLoadCaptcha();
+            
+            return new Promise((resolve, reject) => {
                 const onConfirm = () => {
-                    const captchaValue = captchaInput.value.trim();
-                    console.log('🔢 المستخدم أدخل قيمة الكابتشا:', captchaValue);
-                    
-                    if (captchaValue === '') {
-                        console.warn('⚠️ المستخدم لم يدخل قيمة الكابتشا');
-                        showMessage('الرجاء إدخال قيمة الكابتشا', 'warning');
-                        return;
+                    const value = input.value.trim();
+                    if (value) {
+                        cleanup();
+                        modal.style.display = 'none';
+                        resolve(value);
                     }
-                    
-                    modal.style.display = 'none';
-                    cleanup();
-                    resolve(captchaValue);
                 };
                 
-                // معالج الإلغاء
-                const onCancel = () => {
-                    console.log('❌ المستخدم ألغى عملية الكابتشا');
-                    modal.style.display = 'none';
-                    cleanup();
-                    reject(new Error('تم إلغاء عملية الكابتشا من قبل المستخدم'));
-                };
-                
-                // معالج التحديث
                 const onRefresh = async () => {
-                    console.log('🔄 المستخدم يطلب تحديث الكابتشا');
-                    await loadCaptcha();
+                    await tryLoadCaptcha();
                 };
                 
-                // تنظيف المستمعين
+                const onCancel = () => {
+                    cleanup();
+                    modal.style.display = 'none';
+                    reject(new Error('تم الإلغاء'));
+                };
+                
                 const cleanup = () => {
                     confirmBtn.removeEventListener('click', onConfirm);
-                    cancelBtn.removeEventListener('click', onCancel);
                     refreshBtn.removeEventListener('click', onRefresh);
+                    cancelBtn.removeEventListener('click', onCancel);
                 };
                 
                 confirmBtn.addEventListener('click', onConfirm);
-                cancelBtn.addEventListener('click', onCancel);
                 refreshBtn.addEventListener('click', onRefresh);
+                cancelBtn.addEventListener('click', onCancel);
+                
+                // الضغط على Enter
+                input.onkeypress = (e) => {
+                    if (e.key === 'Enter' && !confirmBtn.disabled) {
+                        onConfirm();
+                    }
+                };
             });
         }
-
-        // =============================================
-        // دوال تسجيل الدخول
-        // =============================================
-        async function performLogin(captchaValue) {
-            console.log('🔐 بدء عملية تسجيل الدخول...');
-            console.log('📊 بيانات تسجيل الدخول:', { 
-                username: loginData.username, 
-                password: '********', 
-                capt: captchaValue 
-            });
-            
-            const fullLoginData = {
-                ...loginData,
-                capt: captchaValue
-            };
-            
-            const formBody = new URLSearchParams(fullLoginData).toString();
-            console.log('📦 جسم الطلب:', formBody);
-
+        
+        // تسجيل الدخول
+        async function loginWithCaptcha() {
             try {
-                console.log('📤 إرسال طلب تسجيل الدخول إلى:', `${BASE_URL}/signin`);
+                showStatus('جاري تجهيز الكابتشا...', 'info');
+                const captchaValue = await showCaptchaModal();
                 
-                // استخدام بروكسي لتجنب CORS
-                const proxyUrl = CORS_PROXIES[1] + encodeURIComponent(`${BASE_URL}/signin`); // استخدام cors-anywhere
+                showStatus(`جاري تسجيل الدخول...`, 'info');
                 
-                const response = await fetch(proxyUrl, {
+                const formData = new URLSearchParams({
+                    username: '1Lmohamedabed',
+                    password: '1Lmohamedabed',
+                    capt: captchaValue
+                });
+                
+                const response = await fetch(`${BASE_URL}/signin`, {
                     method: 'POST',
                     headers: {
-                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
                         'Content-Type': 'application/x-www-form-urlencoded',
                         'Cookie': `PHPSESSID=${PHPSESSID}`,
-                        'Origin': BASE_URL,
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                        'User-Agent': 'Mozilla/5.0'
                     },
-                    body: formBody
+                    body: formData,
+                    credentials: 'include'
                 });
-
-                console.log('📥 استلام رد من السيرفر:', {
-                    status: response.status,
-                    statusText: response.statusText
-                });
-
+                
                 if (response.ok) {
-                    console.log('✅ تسجيل الدخول ناجح!');
-                    showMessage('✅ تم تسجيل الدخول بنجاح!', 'success');
-                    
-                    const responseText = await response.text();
-                    console.log('📄 محتوى الرد (أول 200 حرف):', responseText.substring(0, 200) + '...');
-                    
+                    showStatus('✅ تم تسجيل الدخول بنجاح!', 'success');
                     updateIframe(`${BASE_URL}/client/`);
                 } else {
-                    console.error('❌ فشل تسجيل الدخول:', response.status, response.statusText);
-                    showMessage(`❌ فشل تسجيل الدخول. الحالة: ${response.status}`, 'error');
-                    
-                    const errorText = await response.text();
-                    console.error('📄 محتوى الخطأ:', errorText);
+                    showStatus(`❌ فشل تسجيل الدخول: ${response.status}`, 'error');
                 }
             } catch (error) {
-                console.error('💥 خطأ في شبكة تسجيل الدخول:', error);
-                console.error('📋 تفاصيل الخطأ:', {
-                    name: error.name,
-                    message: error.message,
-                    stack: error.stack
-                });
-                showMessage(`❌ حدث خطأ في الشبكة: ${error.message}`, 'error');
+                if (error.message !== 'تم الإلغاء') {
+                    showStatus(`❌ خطأ: ${error.message}`, 'error');
+                }
             }
         }
-
-        // دالة تسجيل الدخول الرئيسية
-        async function loginWithCaptcha() {
-            console.log('🔄 بدء عملية تسجيل الدخول مع الكابتشا');
+        
+        // جلب الأرقام
+        function fetchNumbers() {
+            showStatus('جاري تحميل الأرقام...', 'info');
             
-            try {
-                const captchaValue = await showCaptchaModal();
-                console.log('✅ تم الحصول على قيمة الكابتشا:', captchaValue);
-                await performLogin(captchaValue);
-            } catch (error) {
-                console.error('❌ فشلت عملية تسجيل الدخول:', error.message);
-                showMessage(error.message, 'error');
-            }
-        }
-
-        // =============================================
-        // دوال جلب أرقام SMS
-        // =============================================
-        function fetchSMSNumbers() {
-            console.log('📞 بدء عملية جلب أرقام SMS...');
-            showMessage('جاري تحميل أرقام SMS...', 'info');
+            const display = document.getElementById('numbersDisplay');
+            display.innerHTML = '<div class="loading">جاري التحميل...</div>';
             
-            const numbersDiv = document.getElementById('numbersDisplay');
-            const tableContainer = document.getElementById('numbersTableContainer');
-            numbersDiv.style.display = 'block';
-            tableContainer.innerHTML = 'جاري التحميل...';
-
-            const timestamp = new Date().getTime();
-            const dataUrl = `${BASE_URL}/client/res/data_smsnumbers.php?` + 
-                `frange=&fclient=&sEcho=1&iColumns=6&sColumns=%2C%2C%2C%2C%2C&iDisplayStart=0&iDisplayLength=25&` +
-                `mDataProp_0=0&sSearch_0=&bRegex_0=false&bSearchable_0=true&bSortable_0=true&` +
-                `mDataProp_1=1&sSearch_1=&bRegex_1=false&bSearchable_1=true&bSortable_1=true&` +
-                `mDataProp_2=2&sSearch_2=&bRegex_2=false&bSearchable_2=true&bSortable_2=true&` +
-                `mDataProp_3=3&sSearch_3=&bRegex_3=false&bSearchable_3=true&bSortable_3=true&` +
-                `mDataProp_4=4&sSearch_4=&bRegex_4=false&bSearchable_4=true&bSortable_4=true&` +
-                `mDataProp_5=5&sSearch_5=&bRegex_5=false&bSearchable_5=true&bSortable_5=true&` +
-                `sSearch=&bRegex=false&iSortCol_0=0&sSortDir_0=asc&iSortingCols=1&_=${timestamp}` +
-                `&callback=parseSMSNumbers`;
-
-            console.log('🔗 رابط جلب الأرقام (JSONP):', dataUrl);
-
             const script = document.createElement('script');
-            script.src = dataUrl;
-
-            window.parseSMSNumbers = function(data) {
-                console.log('📥 استلام بيانات JSONP:', data);
-                
-                if (data && data.aaData && Array.isArray(data.aaData)) {
-                    console.log(`✅ تم استلام ${data.aaData.length} سجل من الأرقام`);
-                    displayNumbersTable(data.aaData);
-                    showMessage(`✅ تم تحميل ${data.aaData.length} رقم بنجاح.`, 'success');
+            script.src = `${BASE_URL}/client/res/data_smsnumbers.php?callback=handleNumbers&_=${Date.now()}`;
+            
+            window.handleNumbers = function(data) {
+                if (data && data.aaData) {
+                    let html = '<table><tr><th>المعرف</th><th>الرقم</th><th>الحالة</th></tr>';
+                    data.aaData.forEach(row => {
+                        html += '<tr>';
+                        row.forEach(cell => html += `<td>${cell || '-'}</td>`);
+                        html += '</tr>';
+                    });
+                    html += '</table>';
+                    display.innerHTML = html;
+                    showStatus(`✅ تم تحميل ${data.aaData.length} رقم`, 'success');
                 } else {
-                    console.warn('⚠️ البيانات المستلمة لا تحتوي على aaData:', data);
-                    tableContainer.innerHTML = 'لم يتم العثور على أرقام.';
-                    showMessage('✅ تم التحميل ولكن لا توجد أرقام.', 'info');
+                    display.innerHTML = '<div class="status info">لا توجد أرقام</div>';
                 }
-                
-                document.body.removeChild(script);
-                delete window.parseSMSNumbers;
+                delete window.handleNumbers;
             };
-
-            script.onerror = function(error) {
-                console.error('💥 فشل تحميل سكريبت JSONP:', error);
-                tableContainer.innerHTML = 'حدث خطأ أثناء تحميل الأرقام.';
-                showMessage('❌ فشل تحميل الأرقام.', 'error');
-                document.body.removeChild(script);
-                delete window.parseSMSNumbers;
-            };
-
+            
             document.body.appendChild(script);
         }
-
-        function displayNumbersTable(data) {
-            const tableContainer = document.getElementById('numbersTableContainer');
-            
-            if (!data || data.length === 0) {
-                tableContainer.innerHTML = '<p>لا توجد أرقام لعرضها.</p>';
-                return;
-            }
-
-            let html = '<table><thead><tr>';
-            html += '<th>المعرف</th><th>الرقم</th><th>الحالة</th><th>نوع الخدمة</th><th>تاريخ الإنشاء</th><th>ملاحظات</th>';
-            html += '</tr></thead><tbody>';
-
-            data.forEach(row => {
-                html += '<tr>';
-                row.forEach(cell => {
-                    html += `<td>${cell || ''}</td>`;
-                });
-                html += '</tr>';
-            });
-
-            html += '</tbody></table>';
-            tableContainer.innerHTML = html;
-            console.log('✅ تم عرض الجدول بنجاح');
-        }
-
-        // =============================================
-        // أحداث الأزرار والتهيئة
-        // =============================================
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('✅ DOM جاهز، بدء تهيئة الأحداث');
-            
-            document.getElementById('loginBtn').addEventListener('click', () => {
-                console.log('🖱️ المستخدم ضغط على زر تسجيل الدخول');
-                loginWithCaptcha();
-            });
-
-            document.getElementById('dashboardBtn').addEventListener('click', () => {
-                console.log('🖱️ المستخدم ضغط على زر عرض لوحة التحكم');
-                updateIframe(`${BASE_URL}/client/SMSDashboard`);
-            });
-
-            document.getElementById('showNumbersBtn').addEventListener('click', () => {
-                console.log('🖱️ المستخدم ضغط على زر عرض أرقامي');
-                fetchSMSNumbers();
-            });
-
-            console.log('🎉 تم تحميل الصفحة بنجاح');
-            showMessage('مرحباً! افتح وحدة التحكم (F12) لمشاهدة التفاصيل.', 'info');
-        });
-
-        // إغلاق النافذة إذا ضغط المستخدم خارجها
-        window.addEventListener('click', (event) => {
+        
+        // الأحداث
+        document.getElementById('loginBtn').onclick = loginWithCaptcha;
+        document.getElementById('dashboardBtn').onclick = () => updateIframe(`${BASE_URL}/client/SMSDashboard`);
+        document.getElementById('showNumbersBtn').onclick = fetchNumbers;
+        
+        // إغلاق النافذة بالضغط خارجها
+        window.onclick = (e) => {
             const modal = document.getElementById('captchaModal');
-            if (event.target === modal) {
-                console.log('👆 المستخدم ضغط خارج نافذة الكابتشا');
+            if (e.target === modal) {
                 modal.style.display = 'none';
             }
-        });
+        };
     </script>
 </body>
 </html>

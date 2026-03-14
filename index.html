@@ -1,565 +1,307 @@
 <!DOCTYPE html>
-<html dir="rtl" lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XISORA - مقارنة الأرقام</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>لوحة تحكم SMS</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
-        }
-
         body {
-            background: linear-gradient(145deg, #0b2b4f 0%, #1a3f6a 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 15px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
         }
-
         .container {
-            max-width: 1400px;
-            width: 100%;
-            background: white;
-            border-radius: 40px;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
-
-        .header {
-            background: linear-gradient(135deg, #1e3a6b, #0b2b4f);
-            color: white;
-            padding: 25px 30px;
-            border-bottom: 4px solid #ffd966;
-        }
-
-        .header h1 {
-            font-size: 2.2rem;
-            margin-bottom: 5px;
-        }
-
-        .header h1 i {
-            color: #ffd966;
-            margin-left: 10px;
-        }
-
-        .header p {
-            font-size: 1rem;
-            opacity: 0.9;
-            padding-right: 15px;
-            border-right: 3px solid #ffd966;
-        }
-
-        .main-content {
-            padding: 25px;
-        }
-
-        .info-cards {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            margin-bottom: 25px;
-        }
-
-        .card {
-            flex: 1;
-            min-width: 180px;
-            background: #f0f7ff;
-            border-radius: 20px;
-            padding: 15px;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            border: 2px solid #cbd6e8;
-        }
-
-        .card-icon {
-            background: #1e3a6b;
-            color: #ffd966;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-        }
-
-        .card-text h3 {
-            color: #0b2b4f;
-            font-size: 0.9rem;
-        }
-
-        .card-text .number {
-            font-size: 1.8rem;
-            font-weight: 800;
-            color: #1e3a6b;
-            line-height: 1.2;
-        }
-
-        .two-col {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-
-        .col {
-            flex: 1 1 400px;
-            background: #f9fcff;
-            border-radius: 25px;
+            max-width: 95%;
+            margin: auto;
+            background-color: #fff;
             padding: 20px;
-            border: 2px solid #dde2ec;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-
-        .col-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
+        h1, h2 {
+            color: #0056b3;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
         }
-
-        .col-header h2 {
-            color: #1e3a6b;
-            font-size: 1.5rem;
-        }
-
-        .col-header h2 i {
-            color: #ffd966;
-            margin-left: 8px;
-        }
-
-        .example-btn {
-            background: white;
-            border: 2px solid #1e3a6b;
-            color: #1e3a6b;
-            padding: 8px 18px;
-            border-radius: 50px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .example-btn:hover {
-            background: #ffd966;
-            border-color: #ffd966;
-        }
-
-        textarea {
-            width: 100%;
-            height: 250px;
-            padding: 15px;
-            border: 2px solid #d6e0ef;
-            border-radius: 20px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            background: white;
-            resize: vertical;
-            direction: ltr;
-            text-align: left;
-        }
-
-        textarea:focus {
-            border-color: #ffd966;
-            outline: none;
-        }
-
-        .info-text {
-            background: #e4f0e7;
-            color: #1e5c3b;
-            padding: 10px 15px;
-            border-radius: 50px;
-            margin-top: 12px;
-            font-size: 0.9rem;
-            border: 1px solid #a5d6b2;
-        }
-
-        .info-text i {
-            margin-left: 8px;
-        }
-
         .actions {
+            margin: 20px 0;
             display: flex;
             gap: 15px;
             flex-wrap: wrap;
-            justify-content: center;
-            margin: 25px 0;
         }
-
-        .primary-btn {
-            background: linear-gradient(135deg, #1e3a6b, #0b2b4f);
-            color: white;
-            font-size: 1.3rem;
-            font-weight: 700;
-            padding: 15px 40px;
-            border-radius: 60px;
-            cursor: pointer;
-            border: 2px solid #ffd966;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: 0.3s;
-        }
-
-        .primary-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(11,43,79,0.4);
-        }
-
-        .secondary-btn {
-            background: white;
-            border: 2px solid #1e3a6b;
-            color: #1e3a6b;
-            font-size: 1.2rem;
-            font-weight: 600;
-            padding: 15px 35px;
-            border-radius: 60px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .secondary-btn:hover {
-            background: #f0f7ff;
-        }
-
-        .result-area {
-            background: #f0f7ff;
-            border-radius: 30px;
-            padding: 25px;
-            border: 3px solid #ffd966;
-        }
-
-        .result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        .result-header h2 {
-            color: #1e3a6b;
-            font-size: 1.8rem;
-        }
-
-        .count-badge {
-            background: #1e3a6b;
-            color: #ffd966;
-            padding: 8px 25px;
-            border-radius: 50px;
-            font-size: 1.5rem;
-            font-weight: 800;
-            border: 2px solid #ffd966;
-        }
-
-        .result-box {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            border: 2px solid #cbd6e8;
-            font-family: 'Courier New', monospace;
+        button {
+            padding: 12px 25px;
             font-size: 16px;
-            line-height: 1.8;
-            max-height: 300px;
-            overflow-y: auto;
-            direction: ltr;
-            text-align: left;
-            white-space: pre;
-        }
-
-        .copy-btn {
-            background: white;
-            border: 2px solid #1e3a6b;
-            color: #1e3a6b;
-            font-size: 1.1rem;
-            font-weight: 600;
-            padding: 12px 30px;
-            border-radius: 50px;
-            margin-top: 15px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
+            transition: background-color 0.3s ease, transform 0.1s ease;
         }
-
-        .copy-btn:hover {
-            background: #1e3a6b;
+        button:active {
+            transform: scale(0.98);
+        }
+        #loginBtn {
+            background-color: #28a745;
             color: white;
         }
-
-        .footer {
-            background: linear-gradient(135deg, #0f2a44, #0b2b4f);
+        #loginBtn:hover {
+            background-color: #218838;
+        }
+        #dashboardBtn {
+            background-color: #007bff;
             color: white;
-            padding: 20px;
-            text-align: center;
-            border-top: 4px solid #ffd966;
         }
-
-        .footer .name {
-            font-size: 1.3rem;
-            margin-bottom: 5px;
+        #dashboardBtn:hover {
+            background-color: #0056b3;
         }
-
-        .footer .name span {
-            color: #ffd966;
-            font-size: 1.6rem;
+        #showNumbersBtn {
+            background-color: #17a2b8;
+            color: white;
         }
-
-        .footer .copyright {
-            font-size: 0.9rem;
-            opacity: 0.9;
+        #showNumbersBtn:hover {
+            background-color: #117a8b;
         }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-top: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        #numbersDisplay {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            overflow-x: auto;
+            direction: ltr; /* لعرض الجدول بشكل صحيح */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .status-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- الهيدر -->
-        <div class="header">
-            <h1>
-                <i class="fas fa-chart-line"></i>
-                XISORA | مقارنة الأرقام
-            </h1>
-            <p>استخراج تلقائي لجميع أرقام الهواتف من أي نص ومقارنتها</p>
+        <h1>نظام إدارة SMS</h1>
+
+        <!-- رسائل الحالة -->
+        <div id="statusMessage" class="status-message" style="display: none;"></div>
+
+        <!-- أزرار التحكم -->
+        <div class="actions">
+            <button id="loginBtn">🔑 تسجيل الدخول</button>
+            <button id="dashboardBtn">📊 عرض لوحة التحكم (Dashboard)</button>
+            <button id="showNumbersBtn">📞 عرض أرقامي</button>
         </div>
 
-        <div class="main-content">
-            <!-- كروت الإحصائيات -->
-            <div class="info-cards">
-                <div class="card">
-                    <div class="card-icon"><i class="fas fa-file-alt"></i></div>
-                    <div class="card-text">
-                        <h3>أرقام MDR</h3>
-                        <div class="number" id="statMDR">0</div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><i class="fas fa-list"></i></div>
-                    <div class="card-text">
-                        <h3>أرقامك</h3>
-                        <div class="number" id="statMyNumbers">0</div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><i class="fas fa-star"></i></div>
-                    <div class="card-text">
-                        <h3>غير المتكرر</h3>
-                        <div class="number" id="statUnique">0</div>
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-icon"><i class="fas fa-globe"></i></div>
-                    <div class="card-text">
-                        <h3>عدد الدول</h3>
-                        <div class="number" id="statCountries">0</div>
-                    </div>
-                </div>
-            </div>
+        <!-- إطار لعرض الصفحات (Dashboard, MySMSNumbers) -->
+        <h2>المحتوى المستعرض:</h2>
+        <iframe id="contentFrame" src="about:blank" title="عرض المحتوى عن بعد"></iframe>
 
-            <!-- المربعين -->
-            <div class="two-col">
-                <!-- MDR -->
-                <div class="col">
-                    <div class="col-header">
-                        <h2><i class="fas fa-file-signature"></i> MDR - التقارير</h2>
-                        <button class="example-btn" id="example1">
-                            <i class="fas fa-paste"></i> تجربة
-                        </button>
-                    </div>
-                    <textarea id="list1" placeholder="الصق هنا أي نص (تقرير، جدول، رسائل...)"></textarea>
-                    <div class="info-text" id="info1">
-                        <i class="fas fa-info-circle"></i>
-                        <span>في انتظار النص...</span>
-                    </div>
-                </div>
-
-                <!-- My Numbers -->
-                <div class="col">
-                    <div class="col-header">
-                        <h2><i class="fas fa-mobile-alt"></i> My Numbers</h2>
-                        <button class="example-btn" id="example2">
-                            <i class="fas fa-paste"></i> تجربة
-                        </button>
-                    </div>
-                    <textarea id="list2" placeholder="الصق هنا أرقامك أو أي نص"></textarea>
-                    <div class="info-text" id="info2">
-                        <i class="fas fa-info-circle"></i>
-                        <span>في انتظار النص...</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- الأزرار -->
-            <div class="actions">
-                <button class="primary-btn" id="sortBtn">
-                    <i class="fas fa-magnifying-glass"></i>
-                    فرز ومقارنة
-                </button>
-                <button class="secondary-btn" id="resetBtn">
-                    <i class="fas fa-rotate-right"></i>
-                    تفريغ
-                </button>
-            </div>
-
-            <!-- النتائج -->
-            <div class="result-area">
-                <div class="result-header">
-                    <h2><i class="fas fa-star" style="color: #ffd966;"></i> النتيجة</h2>
-                    <span class="count-badge" id="countDisplay">0</span>
-                </div>
-                <div class="result-box" id="resultBox">اضغط على زر الفرز لعرض النتيجة...</div>
-                <button class="copy-btn" id="copyBtn">
-                    <i class="fas fa-copy"></i>
-                    نسخ النتيجة
-                </button>
-            </div>
-        </div>
-
-        <!-- الفوتر -->
-        <div class="footer">
-            <div class="name">
-                <i class="fas fa-code"></i>
-                <span>Mohamed-Mesho</span>
-                <i class="fas fa-crown" style="color: #ffd966;"></i>
-            </div>
-            <div class="copyright">
-                <i class="far fa-copyright"></i>
-                2026 XISORA Networks LTD | جميع الحقوق محفوظة Mohamed-Mesho
-            </div>
+        <!-- مكان لعرض الأرقام بنص عادي (اختياري) -->
+        <div id="numbersDisplay" style="display: none;">
+            <h2>📋 أرقام SMS الخاصة بي</h2>
+            <div id="numbersTableContainer">جاري تحميل الأرقام...</div>
         </div>
     </div>
 
     <script>
-        // الحصول على العناصر
-        const list1 = document.getElementById('list1');
-        const list2 = document.getElementById('list2');
-        const sortBtn = document.getElementById('sortBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const copyBtn = document.getElementById('copyBtn');
-        const example1 = document.getElementById('example1');
-        const example2 = document.getElementById('example2');
-        const resultBox = document.getElementById('resultBox');
-        const countDisplay = document.getElementById('countDisplay');
-        const statMDR = document.getElementById('statMDR');
-        const statMyNumbers = document.getElementById('statMyNumbers');
-        const statUnique = document.getElementById('statUnique');
-        const statCountries = document.getElementById('statCountries');
-        const info1 = document.getElementById('info1');
-        const info2 = document.getElementById('info2');
-
-        // دالة استخراج الأرقام
-        function extractNumbers(text) {
-            if (!text) return [];
-            const matches = text.match(/\d{7,}/g);
-            return matches ? matches : [];
-        }
-
-        // دالة تحديث الإحصائيات
-        function updateStats() {
-            const nums1 = extractNumbers(list1.value);
-            const nums2 = extractNumbers(list2.value);
-            
-            const set1 = new Set(nums1);
-            const set2 = new Set(nums2);
-            
-            statMDR.textContent = set1.size;
-            statMyNumbers.textContent = set2.size;
-            
-            // حساب الدول
-            const countries = new Set();
-            [...set1, ...set2].forEach(num => {
-                if (num.length >= 3) countries.add(num.substring(0, 3));
-            });
-            statCountries.textContent = countries.size;
-            
-            info1.innerHTML = `<i class="fas fa-check-circle"></i> تم استخراج ${set1.size} رقم`;
-            info2.innerHTML = `<i class="fas fa-check-circle"></i> تم استخراج ${set2.size} رقم`;
-        }
-
-        // دالة الفرز الرئيسية
-        function performSort() {
-            const nums1 = extractNumbers(list1.value);
-            const nums2 = extractNumbers(list2.value);
-            
-            const set1 = new Set(nums1);
-            const set2 = new Set(nums2);
-            
-            // الأرقام في المجموعة الثانية فقط
-            const uniqueNumbers = [...set2].filter(num => !set1.has(num));
-            uniqueNumbers.sort();
-            
-            // عرض النتيجة
-            if (uniqueNumbers.length === 0) {
-                resultBox.textContent = 'لا توجد أرقام غير متكررة';
-            } else {
-                resultBox.textContent = uniqueNumbers.join('\n');
-            }
-            
-            countDisplay.textContent = uniqueNumbers.length;
-            statUnique.textContent = uniqueNumbers.length;
-            updateStats();
-        }
-
-        // تفريغ الحقول
-        function resetFields() {
-            list1.value = '';
-            list2.value = '';
-            resultBox.textContent = 'اضغط على زر الفرز لعرض النتيجة...';
-            countDisplay.textContent = '0';
-            statUnique.textContent = '0';
-            info1.innerHTML = '<i class="fas fa-info-circle"></i> في انتظار النص...';
-            info2.innerHTML = '<i class="fas fa-info-circle"></i> في انتظار النص...';
-            updateStats();
-        }
-
-        // نسخ النتيجة
-        function copyResult() {
-            const text = resultBox.textContent;
-            if (text && text !== 'اضغط على زر الفرز لعرض النتيجة...' && text !== 'لا توجد أرقام غير متكررة') {
-                navigator.clipboard.writeText(text).then(() => {
-                    alert('✅ تم نسخ الأرقام بنجاح');
-                });
-            }
-        }
-
-        // مثال MDR
-        function loadExample1() {
-            list1.value = `التاريخ	الرقم	الرسالة
-2026-03-13	2250705831025	كود التفعيل: 505403
-2026-03-13	2250713666969	كود: 709-342
-2026-03-13	233238843891	كود: 591289
-2026-03-13	2694014419	كود: 164521
-2026-03-13	255716648060	طلب توصيل`;
-            updateStats();
-        }
-
-        // مثال My Numbers
-        function loadExample2() {
-            list2.value = `2250705831025
-2250713666969
-233238843891
-2694014419
-255716648060
-966501234567
-447911234567
-201234567890`;
-            updateStats();
-        }
-
-        // إضافة الأحداث
-        sortBtn.addEventListener('click', performSort);
-        resetBtn.addEventListener('click', resetFields);
-        copyBtn.addEventListener('click', copyResult);
-        example1.addEventListener('click', loadExample1);
-        example2.addEventListener('click', loadExample2);
+        // نستخدم نفس الجلسة (Session ID) لجميع الطلبات
+        const BASE_URL = 'http://54.39.104.241/ints';
+        // PHPSESSID ثابت من طلبات الـ curl الخاصة بك
+        // ملاحظة: قد تنتهي صلاحية هذا المعرف ويجب تحديثه من متصفحك بعد تسجيل الدخول مرة أخرى.
+        const PHPSESSID = '6600b87d11351991b8b754ae9dfd0a70';
         
-        list1.addEventListener('input', updateStats);
-        list2.addEventListener('input', updateStats);
+        // بيانات تسجيل الدخول
+        const loginData = {
+            username: '1Lmohamedabed',
+            password: '1Lmohamedabed',
+            capt: '6'
+        };
+
+        // دالة لعرض رسالة الحالة
+        function showMessage(message, type = 'info') {
+            const msgDiv = document.getElementById('statusMessage');
+            msgDiv.style.display = 'block';
+            msgDiv.className = `status-message ${type}`;
+            msgDiv.textContent = message;
+            
+            // إخفاء الرسالة بعد 5 ثواني
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // دالة لتحديث عنوان الإطار
+        function updateIframe(url) {
+            const iframe = document.getElementById('contentFrame');
+            iframe.src = url;
+            showMessage(`جاري تحميل: ${url}`, 'info');
+        }
+
+        // دالة تنفيذ تسجيل الدخول باستخدام Fetch API
+        async function performLogin() {
+            showMessage('محاولة تسجيل الدخول...', 'info');
+            
+            // إعدادات الطلب كما في طلب curl
+            const formBody = new URLSearchParams(loginData).toString();
+
+            try {
+                const response = await fetch(`${BASE_URL}/signin`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+                        'Accept-Language': 'en,ar;q=0.9,en-US;q=0.8',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Cookie': `PHPSESSID=${PHPSESSID}`,
+                        'Origin': BASE_URL,
+                        'Referer': `${BASE_URL}/login`,
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'
+                    },
+                    body: formBody,
+                    credentials: 'include' // مهم لتضمين الكوكيز في الطلب
+                });
+
+                if (response.ok) {
+                    showMessage('✅ تم تسجيل الدخول بنجاح!', 'success');
+                    // بعد تسجيل الدخول، يمكن عرض الصفحة التي تليها
+                    updateIframe(`${BASE_URL}/client/`);
+                } else {
+                    showMessage(`❌ فشل تسجيل الدخول. الحالة: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                console.error('خطأ في طلب تسجيل الدخول:', error);
+                showMessage(`❌ حدث خطأ في الشبكة: ${error.message}`, 'error');
+            }
+        }
+
+        // دالة جلب أرقام SMS باستخدام JSONP (للتغلب على CORS)
+        function fetchSMSNumbers() {
+            showMessage('جاري تحميل أرقام SMS...', 'info');
+            
+            // إخفاء المحتوى السابق وعرض مكان الأرقام
+            const numbersDiv = document.getElementById('numbersDisplay');
+            const tableContainer = document.getElementById('numbersTableContainer');
+            numbersDiv.style.display = 'block';
+            tableContainer.innerHTML = 'جاري التحميل...';
+
+            // رابط API للأرقام مع إضافة callback لـ JSONP
+            // تم استخراج المعاملات من طلب curl الأخير
+            const timestamp = new Date().getTime(); // لمنع التخزين المؤقت
+            const dataUrl = `${BASE_URL}/client/res/data_smsnumbers.php?` + 
+                `frange=&fclient=&sEcho=1&iColumns=6&sColumns=%2C%2C%2C%2C%2C&iDisplayStart=0&iDisplayLength=25&` +
+                `mDataProp_0=0&sSearch_0=&bRegex_0=false&bSearchable_0=true&bSortable_0=true&` +
+                `mDataProp_1=1&sSearch_1=&bRegex_1=false&bSearchable_1=true&bSortable_1=true&` +
+                `mDataProp_2=2&sSearch_2=&bRegex_2=false&bSearchable_2=true&bSortable_2=true&` +
+                `mDataProp_3=3&sSearch_3=&bRegex_3=false&bSearchable_3=true&bSortable_3=true&` +
+                `mDataProp_4=4&sSearch_4=&bRegex_4=false&bSearchable_4=true&bSortable_4=true&` +
+                `mDataProp_5=5&sSearch_5=&bRegex_5=false&bSearchable_5=true&bSortable_5=true&` +
+                `sSearch=&bRegex=false&iSortCol_0=0&sSortDir_0=asc&iSortingCols=1&_=${timestamp}` +
+                `&callback=parseSMSNumbers`; // إضافة callback لوظيفة JSONP
+
+            // إنشاء عنصر script ديناميكيًا لتنفيذ JSONP
+            const script = document.createElement('script');
+            script.src = dataUrl;
+
+            // تعريف الدالة العامة التي سيتم استدعاؤها عند نجاح الطلب
+            window.parseSMSNumbers = function(data) {
+                console.log('تم استلام البيانات:', data);
+                if (data && data.aaData && Array.isArray(data.aaData)) {
+                    displayNumbersTable(data.aaData);
+                    showMessage(`✅ تم تحميل ${data.aaData.length} رقم بنجاح.`, 'success');
+                } else {
+                    tableContainer.innerHTML = 'لم يتم العثور على أرقام.';
+                    showMessage('✅ تم التحميل ولكن لا توجد أرقام.', 'info');
+                }
+                // تنظيف: إزالة عنصر script بعد التنفيذ
+                document.body.removeChild(script);
+                delete window.parseSMSNumbers;
+            };
+
+            // معالجة الأخطاء (إذا فشل تحميل السكريبت)
+            script.onerror = function() {
+                tableContainer.innerHTML = 'حدث خطأ أثناء تحميل الأرقام. قد يكون بسبب سياسة CORS أو أن الرابط غير صحيح.';
+                showMessage('❌ فشل تحميل الأرقام. تحقق من اتصالك بالسيرفر.', 'error');
+                document.body.removeChild(script);
+                delete window.parseSMSNumbers;
+            };
+
+            // إضافة السكريبت إلى الصفحة لبدء الطلب
+            document.body.appendChild(script);
+        }
+
+        // دالة عرض الأرقام في جدول
+        function displayNumbersTable(data) {
+            const tableContainer = document.getElementById('numbersTableContainer');
+            
+            if (!data || data.length === 0) {
+                tableContainer.innerHTML = '<p>لا توجد أرقام لعرضها.</p>';
+                return;
+            }
+
+            // بناء الجدول
+            let html = '<table><thead><tr>';
+            // إضافة عناوين الأعمدة (افتراضية)
+            html += '<th>المعرف</th><th>الرقم</th><th>الحالة</th><th>نوع الخدمة</th><th>تاريخ الإنشاء</th><th>ملاحظات</th>';
+            html += '</tr></thead><tbody>';
+
+            data.forEach(row => {
+                html += '<tr>';
+                row.forEach(cell => {
+                    html += `<td>${cell || ''}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            tableContainer.innerHTML = html;
+        }
+
+        // -- أحداث الأزرار --
+        document.getElementById('loginBtn').addEventListener('click', performLogin);
+
+        document.getElementById('dashboardBtn').addEventListener('click', () => {
+            updateIframe(`${BASE_URL}/client/SMSDashboard`);
+        });
+
+        document.getElementById('showNumbersBtn').addEventListener('click', () => {
+            // محاولة جلب الأرقام عبر JSONP
+            fetchSMSNumbers();
+            // يمكن أيضاً عرض الصفحة كاملة في الإطار (أقل تفضيلاً بسبب CORS)
+            // updateIframe(`${BASE_URL}/client/MySMSNumbers`);
+        });
+
+        // رسالة ترحيب عند تحميل الصفحة
+        showMessage('مرحباً! استخدم الأزرار أعلاه للتحكم.', 'info');
     </script>
 </body>
 </html>
